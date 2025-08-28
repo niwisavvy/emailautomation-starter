@@ -45,9 +45,34 @@ if file:
 
 # --- Compose message ---
 st.subheader("Compose message")
-st.markdown("Use placeholders like `{name}`, `{company}`, `{sender}` in subject/body.")
-subject_tpl = st.text_input("Subject", value="Hello {name}")
-body_tpl = st.text_area("Body", value="Hi {name},\n\nThis is a test.\n\nRegards,\n{sender}", height=200)
+
+# Subject line options
+subject_options = [
+    "Special proposal for {company}",
+    "Collaboration opportunity with {company}",
+    "Exclusive offer for {name}",
+    "Your personalized proposal from {sender}"
+]
+subject_tpl = st.selectbox("Choose a subject line", subject_options)
+
+# Cost input
+st.subheader("Proposal details")
+currency = st.selectbox("Currency", ["USD", "AED"])
+cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=10.0, value=100.0)
+
+# Prefilled body template
+body_tpl = st.text_area(
+    "Body",
+    value=(
+        "Hi {name},\n\n"
+        "I’m reaching out with a tailored proposal for {company}. "
+        "Our solution is designed to add real value, and we can offer this at "
+        "{cost} {currency}.\n\n"
+        "Let me know if this works for you, and I’d be happy to discuss further.\n\n"
+        "Best regards,\n{sender}"
+    ),
+    height=250
+)
 
 # --- helpers ---
 def render(tpl: str, row: dict) -> str:
@@ -93,6 +118,9 @@ if st.button("🚀 Send emails"):
         for i, row in df.iterrows():
             rowd = row.to_dict()
             rowd.setdefault("sender", from_name or from_email)
+            rowd.setdefault("cost", cost)
+            rowd.setdefault("currency", currency)
+
             to_addr = test_email if test_mode else rowd.get("email")
             subject = render(subject_tpl, rowd)
             body = render(body_tpl, rowd)
