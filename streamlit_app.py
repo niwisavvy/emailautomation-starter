@@ -29,7 +29,7 @@ from_email = st.text_input("From email", value=smtp_from_default)
 st.write("")
 test_mode = st.checkbox("TEST MODE — send all messages to this address", value=True)
 test_email = st.text_input("Test recipient email (used in TEST MODE)", value=smtp_user or from_email)
-pause = st.slider("Pause between emails (seconds)", 0.0, 60.0, 1.0)
+pause = st.slider("Pause between emails (seconds)", 0.0, 60.0, 10.0)
 
 # --- Upload recipients ---
 st.subheader("Recipients CSV")
