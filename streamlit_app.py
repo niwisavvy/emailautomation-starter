@@ -32,16 +32,16 @@ test_email = st.text_input("Test recipient email (used in TEST MODE)", value=smt
 pause = st.slider("Pause between emails (seconds)", 0.0, 60.0, 10.0)
 
 # --- Upload recipients ---
-st.subheader("Recipients CSV")
-st.caption("Upload a CSV with at least an `email` column; extra columns (name, company) become placeholders.")
-file = st.file_uploader("Upload CSV", type=["csv"])
-df = None
-if file:
-    try:
-        df = pd.read_csv(file)
-        st.write(df.head())
-    except Exception as e:
-        st.error(f"Could not read CSV: {e}")
+#st.subheader("Recipients CSV")
+#st.caption("Upload a CSV with at least an `email` column; extra columns (name, company) become placeholders.")
+#file = st.file_uploader("Upload CSV", type=["csv"])
+#df = None
+#if file:
+ #   try:
+  #      df = pd.read_csv(file)
+   #     st.write(df.head())
+    #except Exception as e:
+     #   st.error(f"Could not read CSV: {e}")
 
 # --- Compose message ---
 st.subheader("Compose message")
