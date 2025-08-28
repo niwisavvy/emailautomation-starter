@@ -61,9 +61,9 @@ currency = st.selectbox("Currency", ["USD", "AED"])
 cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=10.0, value=100.0)
 
 # Prefilled body template
-body_tpl = st.text_area(
-    "Body",
-    value=(
+#body_tpl = st.text_area(
+  #  "Body",
+#    value=(
 # Body template options (predefined)
 body_templates == {
     "Proposal (standard)" : (
@@ -88,7 +88,7 @@ body_templates == {
         "Cheers,\n{sender}"
     )
 }
-))
+
 
 # --- helpers ---
 def render(tpl: str, row: dict) -> str:
