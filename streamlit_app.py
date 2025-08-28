@@ -88,7 +88,7 @@ body_templates = {
         "Cheers,\n{sender}"
     )
 }
-)
+))
 
 # --- helpers ---
 def render(tpl: str, row: dict) -> str:
