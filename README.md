@@ -1,0 +1,1 @@
+# emailautomation-starter
