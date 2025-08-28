@@ -65,8 +65,8 @@ body_tpl = st.text_area(
     "Body",
     value=(
 # Body template options (predefined)
-body_templates = {
-    "Proposal (standard)": (
+body_templates == {
+    "Proposal (standard)" : (
         "Hi {name},\n\n"
         "I’m reaching out with a tailored proposal for {company}. "
         "Our solution is designed to add real value, and we can offer this at "
