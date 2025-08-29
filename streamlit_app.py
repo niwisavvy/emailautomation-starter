@@ -113,6 +113,6 @@ if st.button("Send Emails"):
             
             progress.progress((idx + 1) / len(df))
 # Proposal details
-st.subheader("Proposal details")
+st.subheader("Cost Associated")
 currency = st.selectbox("Currency", ["USD", "AED"])
 cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=1000.0)
