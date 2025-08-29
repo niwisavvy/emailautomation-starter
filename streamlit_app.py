@@ -1,47 +1,29 @@
 import streamlit as st
 import pandas as pd
-import time
 import smtplib
-import ssl
-from email.message import EmailMessage
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-st.set_page_config(page_title="Email Automation 360", page_icon="📧")
+# --- Email (SMTP) settings (hard-coded) ---
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587  # use 465 if SSL
+USE_TLS = True   # set False if using SSL instead of TLS
 
-st.title("📧 Email Automation 360 — Starter (SMTP)")
+# --- App title ---
+st.title("Email Automation Tool")
 
-# --- safe defaults from Streamlit secrets (when deployed) ---
-smtp_host_default = st.secrets.get("SMTP_HOST", "smtp.gmail.com") if hasattr(st, "secrets") else "smtp.gmail.com"
-smtp_port_default = int(st.secrets.get("SMTP_PORT", 465)) if hasattr(st, "secrets") else 465
-smtp_user_default = st.secrets.get("SMTP_USER", "") if hasattr(st, "secrets") else ""
-smtp_from_default = st.secrets.get("SMTP_FROM", smtp_user_default) if hasattr(st, "secrets") else smtp_user_default
-smtp_pass_default = st.secrets.get("SMTP_PASS", "") if hasattr(st, "secrets") else ""
+# --- Upload CSV ---
+st.subheader("Upload recipient list")
+uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+if uploaded_file:
+    df = pd.read_csv(uploaded_file)
+    st.dataframe(df)
 
-# --- Email account setup ---
-st.subheader("SMTP settings (use Streamlit Secrets in cloud for safety)")
-smtp_host = st.text_input("SMTP host", value=smtp_host_default)
-smtp_port = st.number_input("SMTP port", value=smtp_port_default, step=1)
-smtp_user = st.text_input("SMTP username (your email)", value=smtp_user_default)
-smtp_pass = st.text_input("SMTP password / App Password", type="password", value=smtp_pass_default)
-from_name = st.text_input("From name", value="")
-from_email = st.text_input("From email", value=smtp_from_default)
-
-# --- Test mode & throttle ---
-st.write("")
-test_mode = st.checkbox("TEST MODE — send all messages to this address", value=True)
-test_email = st.text_input("Test recipient email (used in TEST MODE)", value=smtp_user or from_email)
-pause = st.slider("Pause between emails (seconds)", 0.0, 60.0, 10.0)
-
-# --- Upload recipients ---
-st.subheader("Recipients CSV")
-st.caption("Upload a CSV with at least an `email` column; extra columns (name, company) become placeholders.")
-file = st.file_uploader("Upload CSV", type=["csv"])
-df = None
-if file:
-    try:
-        df = pd.read_csv(file)
-        st.write(df.head())
-    except Exception as e:
-        st.error(f"Could not read CSV: {e}")
+# --- Email configuration (frontend only) ---
+st.subheader("Email configuration")
+from_email = st.text_input("Your email address")
+app_password = st.text_input("App password", type="password")
+from_name = st.text_input("Your name (optional)")
 
 # --- Compose message ---
 st.subheader("Compose message")
@@ -55,10 +37,10 @@ subject_options = [
 ]
 subject_tpl = st.selectbox("Choose a subject line", subject_options)
 
-# Cost input
+# Proposal details
 st.subheader("Proposal details")
 currency = st.selectbox("Currency", ["USD", "AED"])
-cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=10.0, value=1000.0)
+cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=10.0, value=100.0)
 
 # Body template options (predefined)
 body_templates = {
@@ -90,68 +72,45 @@ st.subheader("Message body")
 body_choice = st.selectbox("Choose a body template", list(body_templates.keys()))
 body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250)
 
-
-# --- helpers ---
-def render(tpl: str, row: dict) -> str:
-    try:
-        return tpl.format(**row)
-    except Exception:
-        return tpl
-
-def compose_message(to_email, subject, body):
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = f"{from_name} <{from_email}>" if from_name else from_email
-    msg["To"] = to_email
-    msg.set_content(body)
-    return msg
-
-def send_email(msg):
-    context = ssl.create_default_context()
-    with smtplib.SMTP_SSL(smtp_host, smtp_port, context=context) as server:
-        server.login(smtp_user, smtp_pass)
-        server.send_message(msg)
-
-# --- Preview ---
-if df is not None and not df.empty:
-    st.subheader("Preview (first row)")
-    first = df.iloc[0].to_dict()
-    first.setdefault("sender", from_name or from_email)
-    st.markdown("**Subject preview:**")
-    st.write(render(subject_tpl, first))
-    st.markdown("**Body preview:**")
-    st.write(render(body_tpl, first))
-
 # --- Send emails ---
 if st.button("Send Emails"):
     if not from_email or not app_password:
         st.error("Please provide your email and app password.")
+    elif uploaded_file is None:
+        st.error("Please upload a CSV file with recipients.")
     else:
         progress = st.progress(0)
         for idx, row in enumerate(df.iterrows()):
             i, rowd = row
+
+            # Fill placeholders
+            rowd = dict(rowd)
+            rowd.setdefault("sender", from_name or from_email)
+            rowd.setdefault("cost", cost)
+            rowd.setdefault("currency", currency)
+
             msg = MIMEMultipart()
             subj = subject_tpl.format(**rowd)
             body = body_tpl.format(**rowd)
+
             msg["From"] = f"{from_name or from_email} <{from_email}>"
             msg["To"] = rowd["email"]
             msg["Subject"] = subj
             msg.attach(MIMEText(body, "plain"))
 
             try:
-                with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-                    if USE_TLS:
+                if USE_TLS:
+                    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
                         server.starttls()
-                    server.login(from_email, app_password)
-                    server.send_message(msg)
+                        server.login(from_email, app_password)
+                        server.send_message(msg)
+                else:
+                    with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
+                        server.login(from_email, app_password)
+                        server.send_message(msg)
+
                 st.success(f"Sent to {rowd['email']}")
             except Exception as e:
                 st.error(f"Failed to send to {rowd['email']}: {e}")
             
             progress.progress((idx + 1) / len(df))
-
-        st.success("Done sending.")
-        logs_df = pd.DataFrame(logs)
-        st.dataframe(logs_df)
-        csv = logs_df.to_csv(index=False).encode("utf-8")
-        st.download_button("Download send log (CSV)", data=csv, file_name="send_log.csv", mime="text/csv")
