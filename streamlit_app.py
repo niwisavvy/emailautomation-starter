@@ -63,10 +63,6 @@ body_templates = {
     )
 }
 
-# Proposal details
-st.subheader("Proposal details")
-currency = st.selectbox("Currency", ["USD", "AED"])
-cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=1000.0)
 
 
 # Choose body template
@@ -116,3 +112,7 @@ if st.button("Send Emails"):
                 st.error(f"Failed to send to {rowd['email']}: {e}")
             
             progress.progress((idx + 1) / len(df))
+# Proposal details
+st.subheader("Proposal details")
+currency = st.selectbox("Currency", ["USD", "AED"])
+cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=1000.0)
