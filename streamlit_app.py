@@ -37,10 +37,6 @@ subject_options = [
 ]
 subject_tpl = st.selectbox("Choose a subject line", subject_options)
 
-# Proposal details
-st.subheader("Proposal details")
-currency = st.selectbox("Currency", ["USD", "AED"])
-cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=10.0, value=100.0)
 
 # Body template options (predefined)
 body_templates = {
@@ -66,6 +62,12 @@ body_templates = {
         "Cheers,\n{sender}"
     )
 }
+
+# Proposal details
+st.subheader("Proposal details")
+currency = st.selectbox("Currency", ["USD", "AED"])
+cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=1000.0)
+
 
 # Choose body template
 st.subheader("Message body")
