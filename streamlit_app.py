@@ -61,12 +61,9 @@ currency = st.selectbox("Currency", ["USD", "AED"])
 cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=10.0, value=100.0)
 
 # Prefilled body template
-#body_tpl = st.text_area(
-  #  "Body",
-#    value=(
-# Body template options (predefined)
-body_templates == {
-    "Proposal (standard)" : (
+body_tpl = st.text_area(
+    "Body",
+    value=(
         "Hi {name},\n\n"
         "I’m reaching out with a tailored proposal for {company}. "
         "Our solution is designed to add real value, and we can offer this at "
@@ -74,20 +71,8 @@ body_templates == {
         "Let me know if this works for you, and I’d be happy to discuss further.\n\n"
         "Best regards,\n{sender}"
     ),
-    "Follow-up (gentle reminder)": (
-        "Hi {name},\n\n"
-        "I just wanted to follow up on my earlier message about {company}. "
-        "This opportunity is still available for {cost} {currency}, "
-        "and I’d love to hear your thoughts.\n\n"
-        "Best regards,\n{sender}"
-    ),
-    "Short intro (very concise)": (
-        "Hi {name},\n\n"
-        "Quick note to share a proposal for {company}: {cost} {currency}. "
-        "Would you like to discuss?\n\n"
-        "Cheers,\n{sender}"
-    )
-}
+    height=250
+)
 
 
 # --- helpers ---
