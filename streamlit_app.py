@@ -85,6 +85,11 @@ body_templates = {
     )
 }
 
+# Choose body template
+st.subheader("Message body")
+body_choice = st.selectbox("Choose a body template", list(body_templates.keys()))
+body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250)
+
 
 # --- helpers ---
 def render(tpl: str, row: dict) -> str:
