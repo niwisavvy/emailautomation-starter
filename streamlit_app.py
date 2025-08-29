@@ -58,7 +58,7 @@ subject_tpl = st.selectbox("Choose a subject line", subject_options)
 # Cost input
 st.subheader("Proposal details")
 currency = st.selectbox("Currency", ["USD", "AED"])
-cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=10.0, value=100.0)
+cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=10.0, value=1000.0)
 
 # Body template options (predefined)
 body_templates = {
