@@ -122,35 +122,34 @@ if df is not None and not df.empty:
     st.markdown("**Body preview:**")
     st.write(render(body_tpl, first))
 
-# --- Send action ---
-if st.button("🚀 Send emails"):
-    if df is None or df.empty:
-        st.error("Please upload a CSV with at least one recipient.")
-    elif not smtp_user or not smtp_pass:
-        st.error("SMTP username and password are required.")
+# --- Send emails ---
+if st.button("Send Emails"):
+    if not from_email or not app_password:
+        st.error("Please provide your email and app password.")
     else:
-        logs = []
-        total = len(df)
         progress = st.progress(0)
-        for i, row in df.iterrows():
-            rowd = row.to_dict()
-            rowd.setdefault("sender", from_name or from_email)
-            rowd.setdefault("cost", cost)
-            rowd.setdefault("currency", currency)
+        for idx, row in enumerate(df.iterrows()):
+            i, rowd = row
+            msg = MIMEMultipart()
+            subj = subject_tpl.format(**rowd)
+            body = body_tpl.format(**rowd)
+            msg["From"] = f"{from_name or from_email} <{from_email}>"
+            msg["To"] = rowd["email"]
+            msg["Subject"] = subj
+            msg.attach(MIMEText(body, "plain"))
 
-            to_addr = test_email if test_mode else rowd.get("email")
-            subject = render(subject_tpl, rowd)
-            body = render(body_tpl, rowd)
-            msg = compose_message(to_addr, subject, body)
             try:
-                send_email(msg)
-                logs.append({"email": to_addr, "status": "SENT"})
-                st.write(f"Sent to: {to_addr}")
+                with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                    if USE_TLS:
+                        server.starttls()
+                    server.login(from_email, app_password)
+                    server.send_message(msg)
+                st.success(f"Sent to {rowd['email']}")
             except Exception as e:
-                logs.append({"email": to_addr, "status": f"ERROR: {e}"})
-                st.error(f"Error sending to {to_addr}: {e}")
-            time.sleep(pause)
-            progress.progress(int((i+1)/total*100))
+                st.error(f"Failed to send to {rowd['email']}: {e}")
+            
+            progress.progress((idx + 1) / len(df))
+
         st.success("Done sending.")
         logs_df = pd.DataFrame(logs)
         st.dataframe(logs_df)
