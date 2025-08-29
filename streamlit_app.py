@@ -69,6 +69,10 @@ body_templates = {
         "Cheers,\n{sender}"
     )
 }
+st.subheader("Compose message")
+st.markdown("Use placeholders like `{name}`, `{company}`, `{sender}` in subject/body.")
+subject_tpl = st.text_input("Subject", value="Hello {name}")
+body_tpl = st.text_area("Body", value="Hi {name},\n\nThis is a test.\n\nRegards,\n{sender}", height=200)
 
 # Subject line options
 subject_options = [
