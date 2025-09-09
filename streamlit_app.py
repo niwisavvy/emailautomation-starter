@@ -21,7 +21,7 @@ st.title("📧 Email Automation 360 — Hardcoded SMTP")
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 465
 
-st.subheader("Email ID")
+
 FROM_EMAIL = st.text_input("Your Email ID")  # <-- replace with your email
 
 # --- SMTP password input only ---
