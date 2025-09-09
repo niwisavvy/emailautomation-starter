@@ -70,14 +70,60 @@ st.subheader("Message body")
 body_choice = st.selectbox("Choose a body template", list(body_templates.keys()))
 body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250)
 
-# Fill placeholders
-rowd = dict(rowd)
-rowd.setdefault("sender", from_name or from_email)
-rowd.setdefault("cost", cost)
-rowd.setdefault("currency", currency)
-rowd.setdefault("company", "your company")   # default if missing
-rowd.setdefault("name", "there")             # default if missing
-rowd.setdefault("email", "")                 # avoid KeyError if missing
+if st.button("Send Emails"):
+    if not from_email or not app_password:
+        st.error("Please provide your email and app password.")
+    elif uploaded_file is None:
+        st.error("Please upload a CSV file with recipients.")
+    else:
+        progress = st.progress(0)
+        skipped = []  # collect skipped recipients
+
+        for idx, row in df.iterrows():
+            rowd = row.to_dict()
+
+            # Skip rows without email
+            if not rowd.get("email"):
+                skipped.append(rowd.get("name", f"Row {idx}"))
+                continue
+
+            # Fill placeholders with defaults
+            rowd.setdefault("sender", from_name or from_email)
+            rowd.setdefault("cost", cost)
+            rowd.setdefault("currency", currency)
+            rowd.setdefault("company", "your company")
+            rowd.setdefault("name", "there")
+
+            msg = MIMEMultipart()
+            subj = subject_tpl.format(**rowd)
+            body = body_tpl.format(**rowd)
+
+            msg["From"] = f"{from_name or from_email} <{from_email}>"
+            msg["To"] = rowd["email"]
+            msg["Subject"] = subj
+            msg.attach(MIMEText(body, "plain"))
+
+            try:
+                if USE_TLS:
+                    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                        server.starttls()
+                        server.login(from_email, app_password)
+                        server.send_message(msg)
+                else:
+                    with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
+                        server.login(from_email, app_password)
+                        server.send_message(msg)
+
+                st.success(f"Sent to {rowd['email']}")
+            except Exception as e:
+                st.error(f"Failed to send to {rowd['email']}: {e}")
+            
+            progress.progress((idx + 1) / len(df))
+
+        # Show skipped recipients
+        if skipped:
+            st.warning("Skipped recipients (no email found):")
+            st.write(", ".join(skipped))
 
 subj = subject_tpl.format(**rowd)
 body = body_tpl.format(**rowd)
