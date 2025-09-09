@@ -64,7 +64,6 @@ def safe_format(template: str, mapping: dict) -> str:
     """Format template safely with missing keys allowed."""
     return template.format_map(defaultdict(str, mapping))
 
-pause = st.slider("Pause between emails (seconds)", 0.0, 200.0, 10.0)
 
 # ---------------- Upload & Sample CSV ----------------
 st.title("Email Automation Tool")
@@ -110,6 +109,8 @@ from_name = st.text_input("Your name (optional)", key="from_name")
 st.subheader("Cost Associated")
 currency = st.selectbox("Currency", ["USD", "AED"], key="currency_select")
 cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=1000.0, key="cost_input")
+
+pause = st.slider("Pause between emails (seconds)", 0.0, 200.0, 10.0)
 
 # ---------------- Compose Message ----------------
 st.subheader("Compose message")
