@@ -212,6 +212,12 @@ if st.button("Send Emails", key="send_emails_btn"):
 
     st.info(f"Done — attempted {total}, sent {sent}, skipped {len(skipped_rows)}, failed {len(failed_rows)}")
 
+
+    # --- Reset front-end after sending ---
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.experimental_rerun()
+
     # download skipped/failed rows if any
     if skipped_rows:
         skipped_df = pd.DataFrame(skipped_rows)
