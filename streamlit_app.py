@@ -1,10 +1,10 @@
 import io
 import re
-import unicodedata
+import time
 from collections import defaultdict
 from email.header import Header
 from email.utils import formataddr, parseaddr
-import time
+
 import streamlit as st
 import pandas as pd
 import smtplib
@@ -13,24 +13,14 @@ from email.mime.multipart import MIMEMultipart
 
 st.set_page_config(page_title="Email Automation Tool")
 
-# --- safe defaults from Streamlit secrets (when deployed) ---
-SMTP_SERVER = st.secrets.get("SMTP_HOST", "smtp.gmail.com") if hasattr(st, "secrets") else "smtp.gmail.com"
-SMTP_PORT = int(st.secrets.get("SMTP_PORT", 587)) if hasattr(st, "secrets") else 587
-smtp_user_default = st.secrets.get("SMTP_USER", "") if hasattr(st, "secrets") else ""
-smtp_from_default = st.secrets.get("SMTP_FROM", smtp_user_default) if hasattr(st, "secrets") else smtp_user_default
-smtp_pass_default = st.secrets.get("SMTP_PASS", "") if hasattr(st, "secrets") else ""
-
-# --- Email (SMTP) settings ---
-
-#st.subheader("SMTP settings (use Streamlit Secrets in cloud for safety)")
-#SMTP_SERVER = "smtp.gmail.com"
-#SMTP_PORT = 587
+# --- SMTP Settings (Gmail by default) ---
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
 USE_TLS = True
-#from_email = st.text_input("From email", value=smtp_from_default)
 
 # ---------------- Helpers ----------------
 def clean_value(val):
-    """Clean individual cell values."""
+    """Clean individual cell values (remove invisible characters)."""
     if isinstance(val, str):
         return (
             val.replace("\xa0", " ")      # non-breaking space
@@ -70,7 +60,7 @@ st.title("Email Automation Tool")
 st.subheader("Upload recipient list")
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"], key="csv_uploader")
 
-# sample CSV
+# Sample CSV
 sample_df = pd.DataFrame({
     "email": ["john.doe@example.com", "jane.smith@example.com"],
     "name": ["John Doe", "Jane Smith"],
@@ -94,7 +84,7 @@ if uploaded_file:
             st.error(f"Couldn't read CSV: {e}")
             df = None
     if df is not None:
-        # clean entire DataFrame
+        # Clean entire DataFrame
         df = df.applymap(clean_value)
         df.columns = [clean_value(c) for c in df.columns]
         st.success("CSV uploaded and cleaned successfully ✅")
@@ -109,8 +99,6 @@ from_name = st.text_input("Your name (optional)", key="from_name")
 st.subheader("Cost Associated")
 currency = st.selectbox("Currency", ["USD", "AED"], key="currency_select")
 cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=1000.0, key="cost_input")
-
-pause = st.slider("Pause between emails (seconds)", 0.0, 200.0, 10.0)
 
 # ---------------- Compose Message ----------------
 st.subheader("Compose message")
@@ -171,12 +159,6 @@ if send_clicked:
     if df is None:
         st.error("Please upload a CSV file with recipients.")
         st.stop()
-    if not from_email or not app_password:
-        st.error("Please provide your email and app password.")
-        st.stop()
-    if df is None:
-        st.error("Please upload a CSV file with recipients.")
-        st.stop()
 
     progress = st.progress(0)
     total = len(df)
@@ -187,14 +169,14 @@ if send_clicked:
     for idx, row in df.iterrows():
         rowd = {str(k): clean_value(v) for k, v in row.to_dict().items()}
 
-        # validate recipient email
+        # Validate recipient email
         recip_addr = clean_email_address(rowd.get("email", ""))
         if not recip_addr:
             skipped_rows.append({**rowd, "__reason": "missing/invalid email"})
             progress.progress((idx + 1) / total)
             continue
 
-        # defaults
+        # Defaults
         rowd.setdefault("sender", from_name or from_email)
         rowd.setdefault("cost", str(cost))
         rowd.setdefault("currency", currency)
@@ -204,31 +186,19 @@ if send_clicked:
         subj_text = safe_format(subject_tpl, rowd)
         body_text = safe_format(body_tpl, rowd)
 
-        # build message (UTF-8 safe headers)
+        # Build message
         msg = MIMEMultipart()
-
-        # From header
-        from_header = formataddr(
-            (str(Header(from_name or from_email, "utf-8")), from_email)
-        )
-
-        # To header (use recipient name if available, otherwise just email)
-        to_header = formataddr(
-            (str(Header(rowd.get("name", ""), "utf-8")), recip_addr)
-        )
+        from_header = formataddr((str(Header(from_name or from_email, "utf-8")), from_email))
+        to_header = formataddr((str(Header(rowd.get("name", ""), "utf-8")), recip_addr))
 
         msg["From"] = from_header
         msg["To"] = to_header
         msg["Subject"] = str(Header(subj_text, "utf-8"))
-
-        # body (UTF-8 safe)
         msg.attach(MIMEText(body_text, "plain", "utf-8"))
-
 
         try:
             if USE_TLS:
                 with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-                    
                     server.starttls()
                     server.login(from_email, app_password)
                     server.send_message(msg)
@@ -238,22 +208,25 @@ if send_clicked:
                     server.send_message(msg)
 
             sent += 1
-            st.success(f"Sent to {recip_addr}")
+            st.success(f"✅ Sent to {recip_addr}")
         except Exception as e:
-            st.error(f"Failed to send to {recip_addr}: {e}")
+            st.error(f"❌ Failed to send to {recip_addr}: {e}")
             failed_rows.append({**rowd, "__reason": str(e)})
 
         progress.progress((idx + 1) / total)
 
-    st.info(f"Done — attempted {total}, sent {sent}, skipped {len(skipped_rows)}, failed {len(failed_rows)}")
+        # --- ⏳ Wait 20s before next email ---
+        if idx < total - 1:
+            wait_time = 20
+            countdown_placeholder = st.empty()
+            for remaining in range(wait_time, 0, -1):
+                countdown_placeholder.info(f"⏳ Waiting {remaining} seconds before next email...")
+                time.sleep(1)
+            countdown_placeholder.empty()
 
+    st.info(f"✅ Done — attempted {total}, sent {sent}, skipped {len(skipped_rows)}, failed {len(failed_rows)}")
 
-    # --- Reset front-end after sending ---
-    #for key in list(st.session_state.keys()):
-     #   del st.session_state[key]
-    #st.experimental_rerun()
-
-    # download skipped/failed rows if any
+    # Download skipped/failed rows if any
     if skipped_rows:
         skipped_df = pd.DataFrame(skipped_rows)
         buf_skipped = io.StringIO()
