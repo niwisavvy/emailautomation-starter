@@ -14,7 +14,7 @@ from email.mime.multipart import MIMEMultipart
 st.set_page_config(page_title="Email Automation Tool")
 
 # --- safe defaults from Streamlit secrets (when deployed) ---
-smtp_host_default = st.secrets.get("SMTP_HOST", "smtp.gmail.com") if hasattr(st, "secrets") else "smtp.gmail.com"
+SMTP_SERVER = st.secrets.get("SMTP_HOST", "smtp.gmail.com") if hasattr(st, "secrets") else "smtp.gmail.com"
 smtp_port_default = int(st.secrets.get("SMTP_PORT", 465)) if hasattr(st, "secrets") else 465
 smtp_user_default = st.secrets.get("SMTP_USER", "") if hasattr(st, "secrets") else ""
 smtp_from_default = st.secrets.get("SMTP_FROM", smtp_user_default) if hasattr(st, "secrets") else smtp_user_default
