@@ -15,8 +15,8 @@ st.set_page_config(page_title="Email Automation Tool")
 
 # --- SMTP Settings (Gmail by default) ---
 SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 465
-USE_SSL = True
+SMTP_PORT = 587
+USE_TLS = True
 
 # ---------------- Helpers ----------------
 def clean_value(val):
@@ -197,13 +197,13 @@ if send_clicked:
         msg.attach(MIMEText(body_text, "plain", "utf-8"))
 
         try:
-            if USE_SSL:
+            if USE_TLS:
                 with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-                    server.startssl()
+                    server.starttls()
                     server.login(from_email, app_password)
                     server.send_message(msg)
             else:
-                with smtplib.SMTP_TLS(SMTP_SERVER, SMTP_PORT) as server:
+                with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
                     server.login(from_email, app_password)
                     server.send_message(msg)
 
