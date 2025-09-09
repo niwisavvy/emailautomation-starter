@@ -15,8 +15,8 @@ st.set_page_config(page_title="Email Automation Tool")
 
 # --- SMTP Settings (Gmail by default) ---
 SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
-USE_TLS = True
+SMTP_PORT = 465
+USE_SSL = True
 
 # ---------------- Helpers ----------------
 def clean_value(val):
