@@ -20,14 +20,14 @@ st.set_page_config(page_title="Email Automation Tool")
 
 # ---------------- Helpers ----------------
 def clean_value(val):
-    """Clean individual cell values and remove hidden/unwanted characters."""
+    """Clean cell values: remove hidden characters and non-ASCII."""
     if isinstance(val, str):
         val = val.replace("\xa0", " ")      # non-breaking space
         val = val.replace("\u200b", "")     # zero-width space
         val = val.strip()
-        val = unicodedata.normalize("NFKD", val)  # normalize Unicode
-        # replace non-ASCII chars with a space
-        val = "".join(ch if ord(ch) < 128 else " " for ch in val)
+        val = unicodedata.normalize("NFKD", val)
+        # remove all non-ASCII characters
+        val = "".join(ch for ch in val if ord(ch) < 128)
         return val
     return val
 
@@ -174,18 +174,20 @@ if st.button("Send Emails", key="send_emails_btn"):
         # build message (UTF-8 safe headers)
         msg = MIMEMultipart()
 
-        # From header — just the email address
+        # From header — only email
         msg["From"] = from_email
 
-        # To header — use recipient name if available
+        # To header — optional recipient name, UTF-8 safe
         to_name_clean = clean_value(rowd.get("name", ""))
-        to_header = formataddr(
-            (str(Header(to_name_clean, "utf-8")), recip_addr)
-        )
-        msg["To"] = recip_addr
+        if to_name_clean:
+            msg["To"] = formataddr((str(Header(to_name_clean, "utf-8")), recip_addr))
+        else:
+            msg["To"] = recip_addr
+
+        # Subject header — UTF-8 safe
         msg["Subject"] = str(Header(subj_text, "utf-8"))
 
-        # body (UTF-8 safe)
+        # Attach body
         msg.attach(MIMEText(body_text, "plain", "utf-8"))
 
         try:
