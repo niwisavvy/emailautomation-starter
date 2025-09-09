@@ -20,13 +20,15 @@ st.set_page_config(page_title="Email Automation Tool")
 
 # ---------------- Helpers ----------------
 def clean_value(val):
-    """Clean individual cell values."""
+    """Clean individual cell values and remove hidden/unwanted characters."""
     if isinstance(val, str):
-        return (
-            val.replace("\xa0", " ")      # non-breaking space
-               .replace("\u200b", "")     # zero-width space
-               .strip()
-        )
+        val = val.replace("\xa0", " ")      # non-breaking space
+        val = val.replace("\u200b", "")     # zero-width space
+        val = val.strip()
+        val = unicodedata.normalize("NFKD", val)  # normalize Unicode
+        # replace non-ASCII chars with a space
+        val = "".join(ch if ord(ch) < 128 else " " for ch in val)
+        return val
     return val
 
 def clean_email_address(raw_email: str) -> str | None:
@@ -93,7 +95,6 @@ if uploaded_file:
 st.subheader("Email configuration")
 from_email = st.text_input("Your email address", key="from_email")
 app_password = st.text_input("App password", type="password", key="app_password")
-from_name = st.text_input("Your name (optional)", key="from_name")
 
 st.subheader("Cost Associated")
 currency = st.selectbox("Currency", ["USD", "AED"], key="currency_select")
@@ -161,7 +162,7 @@ if st.button("Send Emails", key="send_emails_btn"):
             continue
 
         # defaults
-        rowd.setdefault("sender", from_name or from_email)
+        rowd.setdefault("sender", from_email)
         rowd.setdefault("cost", str(cost))
         rowd.setdefault("currency", currency)
         rowd.setdefault("company", "")
@@ -173,23 +174,19 @@ if st.button("Send Emails", key="send_emails_btn"):
         # build message (UTF-8 safe headers)
         msg = MIMEMultipart()
 
-        # From header
-        from_header = formataddr(
-            (str(Header(from_name or from_email, "utf-8")), from_email)
-        )
+        # From header — just the email address
+        msg["From"] = from_email
 
-        # To header (use recipient name if available, otherwise just email)
+        # To header — use recipient name if available
+        to_name_clean = clean_value(rowd.get("name", ""))
         to_header = formataddr(
-            (str(Header(rowd.get("name", ""), "utf-8")), recip_addr)
+            (str(Header(to_name_clean, "utf-8")), recip_addr)
         )
-
-        msg["From"] = from_header
         msg["To"] = to_header
         msg["Subject"] = str(Header(subj_text, "utf-8"))
 
         # body (UTF-8 safe)
         msg.attach(MIMEText(body_text, "plain", "utf-8"))
-
 
         try:
             if USE_TLS:
