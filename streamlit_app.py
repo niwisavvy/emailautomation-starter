@@ -182,7 +182,7 @@ if st.button("Send Emails", key="send_emails_btn"):
         to_header = formataddr(
             (str(Header(to_name_clean, "utf-8")), recip_addr)
         )
-        msg["To"] = to_header
+        msg["To"] = recip_addr
         msg["Subject"] = str(Header(subj_text, "utf-8"))
 
         # body (UTF-8 safe)
