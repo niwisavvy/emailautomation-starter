@@ -1,132 +1,66 @@
-import io
-import re
-import unicodedata
-from collections import defaultdict
-from email.header import Header
-from email.utils import formataddr, parseaddr
-
 import streamlit as st
 import pandas as pd
+import time
 import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import ssl
+from email.message import EmailMessage
 
-# --- Email (SMTP) settings ---
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
-USE_TLS = True
+st.set_page_config(page_title="Email Automation 360", page_icon="📧")
 
-st.set_page_config(page_title="Email Automation Tool")
+st.title("📧 Email Automation 360 — Starter (SMTP)")
 
-# ---------------- Helpers ----------------
-def clean_value(val):
-    """Clean individual cell values."""
-    if isinstance(val, str):
-        return (
-            val.replace("\xa0", " ")      # non-breaking space
-               .replace("\u200b", "")     # zero-width space
-               .strip()
-        )
-    return val
+# --- safe defaults from Streamlit secrets (when deployed) ---
+smtp_host_default = st.secrets.get("SMTP_HOST", "smtp.gmail.com") if hasattr(st, "secrets") else "smtp.gmail.com"
+smtp_port_default = int(st.secrets.get("SMTP_PORT", 465)) if hasattr(st, "secrets") else 465
+smtp_user_default = st.secrets.get("SMTP_USER", "") if hasattr(st, "secrets") else ""
+smtp_from_default = st.secrets.get("SMTP_FROM", smtp_user_default) if hasattr(st, "secrets") else smtp_user_default
+smtp_pass_default = st.secrets.get("SMTP_PASS", "") if hasattr(st, "secrets") else ""
 
-def ascii_safe(s: str) -> str:
-    """Remove or replace non-ASCII characters from headers."""
-    if not s:
-        return ""
-    s = str(s).replace("\xa0", " ").replace("\u200b", "").strip()
-    # Replace non-ASCII with '?'
-    return "".join(ch if ord(ch) < 128 else "?" for ch in s)
+# --- Email account setup ---
+st.subheader("SMTP settings (use Streamlit Secrets in cloud for safety)")
+smtp_host = st.text_input("SMTP host", value=smtp_host_default)
+smtp_port = st.number_input("SMTP port", value=smtp_port_default, step=1)
+smtp_user = st.text_input("SMTP username (your email)", value=smtp_user_default)
+smtp_pass = st.text_input("SMTP password / App Password", type="password", value=smtp_pass_default)
+from_name = st.text_input("From name", value="")
+from_email = st.text_input("From email", value=smtp_from_default)
 
-def clean_header(val):
-    """Clean string for email header: remove non-ASCII chars."""
-    if not val:
-        return ""
-    val = str(val).replace("\xa0", " ").replace("\u200b", "").strip()
-    val = "".join(ch for ch in val if ord(ch) < 128)
-    return val
+# --- Test mode & throttle ---
+st.write("")
+test_mode = st.checkbox("TEST MODE — send all messages to this address", value=True)
+test_email = st.text_input("Test recipient email (used in TEST MODE)", value=smtp_user or from_email)
+pause = st.slider("Pause between emails (seconds)", 0.0, 60.0, 10.0)
 
-
-
-def clean_email_address(raw_email: str) -> str | None:
-    """Parse and sanitize an email address string."""
-    if not raw_email:
-        return None
-    raw_email = clean_value(raw_email)
-    _, addr = parseaddr(raw_email)
-    if not addr:
-        addr = re.sub(r"[<>\s\"']", "", raw_email)
-    addr = addr.strip()
-    if "@" not in addr:
-        return None
-    try:
-        local, domain = addr.rsplit("@", 1)
-    except ValueError:
-        return None
-    try:
-        domain_ascii = domain.encode("idna").decode("ascii")
-    except Exception:
-        domain_ascii = "".join(ch for ch in domain if ord(ch) < 128)
-    return f"{local}@{domain_ascii}"
-
-def safe_format(template: str, mapping: dict) -> str:
-    """Format template safely with missing keys allowed."""
-    return template.format_map(defaultdict(str, mapping))
-
-# ---------------- Upload & Sample CSV ----------------
-st.title("Email Automation Tool")
-st.subheader("Upload recipient list")
-uploaded_file = st.file_uploader("Upload CSV file", type=["csv"], key="csv_uploader")
-
-# sample CSV
-sample_df = pd.DataFrame({
-    "email": ["john.doe@example.com", "jane.smith@example.com"],
-    "name": ["John Doe", "Jane Smith"],
-    "company": ["Acme Corp", "Globex Inc"]
-})
-buf = io.StringIO()
-sample_df.to_csv(buf, index=False)
-st.download_button("📥 Download sample CSV", data=buf.getvalue(),
-                   file_name="sample_recipients.csv", mime="text/csv",
-                   key="download_sample_csv")
-
+# --- Upload recipients ---
+st.subheader("Recipients CSV")
+st.caption("Upload a CSV with at least an `email` column; extra columns (name, company) become placeholders.")
+file = st.file_uploader("Upload CSV", type=["csv"])
 df = None
-if uploaded_file:
+if file:
     try:
-        df = pd.read_csv(uploaded_file)
-    except Exception:
-        uploaded_file.seek(0)
-        try:
-            df = pd.read_csv(uploaded_file, encoding="latin1")
-        except Exception as e:
-            st.error(f"Couldn't read CSV: {e}")
-            df = None
-    if df is not None:
-        # clean entire DataFrame
-        df = df.applymap(clean_value)
-        df.columns = [clean_value(c) for c in df.columns]
-        st.success("CSV uploaded and cleaned successfully ✅")
-        st.dataframe(df)
+        df = pd.read_csv(file)
+        st.write(df.head())
+    except Exception as e:
+        st.error(f"Could not read CSV: {e}")
 
-# ---------------- Email Config ----------------
-st.subheader("Email configuration")
-from_email = st.text_input("Your email address", key="from_email")
-app_password = st.text_input("App password", type="password", key="app_password")
-from_name = st.text_input("Your name (optional)", key="from_name")
-
-st.subheader("Cost Associated")
-currency = st.selectbox("Currency", ["USD", "AED"], key="currency_select")
-cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=1000.0, key="cost_input")
-
-# ---------------- Compose Message ----------------
+# --- Compose message ---
 st.subheader("Compose message")
+
+# Subject line options
 subject_options = [
     "Special proposal for {company}",
     "Collaboration opportunity with {company}",
     "Exclusive offer for {name}",
     "Your personalized proposal from {sender}"
 ]
-subject_tpl = st.selectbox("Choose a subject line", subject_options, key="subject_select")
+subject_tpl = st.selectbox("Choose a subject line", subject_options)
 
+# Cost input
+st.subheader("Proposal details")
+currency = st.selectbox("Currency", ["USD", "AED"])
+cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=10.0, value=1000.0)
+
+# Body template options (predefined)
 body_templates = {
     "Proposal (standard)": (
         "Hi {name},\n\n"
@@ -150,86 +84,74 @@ body_templates = {
         "Cheers,\n{sender}"
     )
 }
-body_choice = st.selectbox("Choose a body template", list(body_templates.keys()), key="body_template_select")
-body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250, key="body_text")
 
-# ---------------- Send Emails ----------------
-if st.button("Send Emails", key="send_emails_btn"):
+# Choose body template
+st.subheader("Message body")
+body_choice = st.selectbox("Choose a body template", list(body_templates.keys()))
+body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250)
+
+
+# --- helpers ---
+def render(tpl: str, row: dict) -> str:
+    try:
+        return tpl.format(**row)
+    except Exception:
+        return tpl
+
+def compose_message(to_email, subject, body):
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = f"{from_name} <{from_email}>" if from_name else from_email
+    msg["To"] = to_email
+    msg.set_content(body)
+    return msg
+
+def send_email(msg):
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_host, smtp_port, context=context) as server:
+        server.login(smtp_user, smtp_pass)
+        server.send_message(msg)
+
+# --- Preview ---
+if df is not None and not df.empty:
+    st.subheader("Preview (first row)")
+    first = df.iloc[0].to_dict()
+    first.setdefault("sender", from_name or from_email)
+    st.markdown("**Subject preview:**")
+    st.write(render(subject_tpl, first))
+    st.markdown("**Body preview:**")
+    st.write(render(body_tpl, first))
+
+# --- Send emails ---
+if st.button("Send Emails"):
     if not from_email or not app_password:
         st.error("Please provide your email and app password.")
-        st.stop()
-    if df is None:
-        st.error("Please upload a CSV file with recipients.")
-        st.stop()
+    else:
+        progress = st.progress(0)
+        for idx, row in enumerate(df.iterrows()):
+            i, rowd = row
+            msg = MIMEMultipart()
+            subj = subject_tpl.format(**rowd)
+            body = body_tpl.format(**rowd)
+            msg["From"] = f"{from_name or from_email} <{from_email}>"
+            msg["To"] = rowd["email"]
+            msg["Subject"] = subj
+            msg.attach(MIMEText(body, "plain"))
 
-    progress = st.progress(0)
-    total = len(df)
-    sent = 0
-    skipped_rows = []
-    failed_rows = []
-
-    for idx, row in df.iterrows():
-        rowd = {str(k): clean_value(v) for k, v in row.to_dict().items()}
-
-        # validate recipient email
-        recip_addr = clean_email_address(rowd.get("email", ""))
-        if not recip_addr:
-            skipped_rows.append({**rowd, "__reason": "missing/invalid email"})
-            progress.progress((idx + 1) / total)
-            continue
-
-        # defaults
-        rowd.setdefault("sender", from_name or from_email)
-        rowd.setdefault("cost", str(cost))
-        rowd.setdefault("currency", currency)
-        rowd.setdefault("company", "")
-        rowd.setdefault("name", "")
-
-        subj_text = safe_format(subject_tpl, rowd)
-        body_text = safe_format(body_tpl, rowd)
-
-        # build message (UTF-8 safe headers)
-        msg = MIMEMultipart()
-        msg["From"] = ascii_safe(from_email)
-        msg["To"] = ascii_safe(recip_addr)
-        msg["Subject"] = ascii_safe(subj_text)
-        
-        # Body (UTF-8 safe)
-        msg.attach(MIMEText(body_text, "plain", "utf-8"))
-
-        try:
-            if USE_TLS:
+            try:
                 with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-                    server.starttls()
+                    if USE_TLS:
+                        server.starttls()
                     server.login(from_email, app_password)
                     server.send_message(msg)
-            else:
-                with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
-                    server.login(from_email, app_password)
-                    server.send_message(msg)
+                st.success(f"Sent to {rowd['email']}")
+            except Exception as e:
+                st.error(f"Failed to send to {rowd['email']}: {e}")
+            
+            progress.progress((idx + 1) / len(df))
 
-            sent += 1
-            st.success(f"Sent to {recip_addr}")
-        except Exception as e:
-            st.error(f"Failed to send to {recip_addr}: {e}")
-            failed_rows.append({**rowd, "__reason": str(e)})
-
-        progress.progress((idx + 1) / total)
-
-    st.info(f"Done — attempted {total}, sent {sent}, skipped {len(skipped_rows)}, failed {len(failed_rows)}")
-
-    # download skipped/failed rows if any
-    if skipped_rows:
-        skipped_df = pd.DataFrame(skipped_rows)
-        buf_skipped = io.StringIO()
-        skipped_df.to_csv(buf_skipped, index=False)
-        st.download_button("📥 Download skipped rows", data=buf_skipped.getvalue(),
-                           file_name="skipped_recipients.csv", mime="text/csv",
-                           key="download_skipped")
-    if failed_rows:
-        failed_df = pd.DataFrame(failed_rows)
-        buf_failed = io.StringIO()
-        failed_df.to_csv(buf_failed, index=False)
-        st.download_button("📥 Download failed rows", data=buf_failed.getvalue(),
-                           file_name="failed_recipients.csv", mime="text/csv",
-                           key="download_failed")
+        st.success("Done sending.")
+        logs_df = pd.DataFrame(logs)
+        st.dataframe(logs_df)
+        csv = logs_df.to_csv(index=False).encode("utf-8")
+        st.download_button("Download send log (CSV)", data=csv, file_name="send_log.csv", mime="text/csv")
