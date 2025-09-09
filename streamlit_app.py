@@ -15,27 +15,21 @@ import pandas as pd
 
 # --- Streamlit page config ---
 st.set_page_config(page_title="Email Automation 360", page_icon="📧")
-st.title("📧 Email Automation 360 — Starter (SMTP)")
+st.title("📧 Email Automation 360 — Hardcoded SMTP")
 
-# --- safe defaults from Streamlit secrets ---
-smtp_host_default = st.secrets.get("SMTP_HOST", "smtp.gmail.com") if hasattr(st, "secrets") else "smtp.gmail.com"
-smtp_port_default = int(st.secrets.get("SMTP_PORT", 465)) if hasattr(st, "secrets") else 465
-smtp_user_default = st.secrets.get("SMTP_USER", "") if hasattr(st, "secrets") else ""
-smtp_from_default = st.secrets.get("SMTP_FROM", smtp_user_default) if hasattr(st, "secrets") else smtp_user_default
-smtp_pass_default = st.secrets.get("SMTP_PASS", "") if hasattr(st, "secrets") else ""
+# --- Hardcoded SMTP config ---
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = 465
+FROM_EMAIL = "youremail@example.com"  # <-- replace with your email
 
-# --- SMTP configuration ---
-st.subheader("SMTP settings")
-smtp_host = st.text_input("SMTP host", value=smtp_host_default)
-smtp_port = st.number_input("SMTP port", value=smtp_port_default, step=1)
-smtp_user = st.text_input("SMTP username (your email)", value=smtp_user_default)
-smtp_pass = st.text_input("SMTP password / App Password", type="password", value=smtp_pass_default)
-from_email = st.text_input("From email (will be used as sender)", value=smtp_from_default)
+# --- SMTP password input only ---
+st.subheader("SMTP password / App Password")
+smtp_pass = st.text_input("SMTP password / App Password", type="password")
 
 # --- Test mode & throttle ---
 st.write("")
 test_mode = st.checkbox("TEST MODE — send all messages to this address", value=True)
-test_email = st.text_input("Test recipient email (used in TEST MODE)", value=smtp_user or from_email)
+test_email = st.text_input("Test recipient email (used in TEST MODE)", value=FROM_EMAIL)
 pause = st.slider("Pause between emails (seconds)", 0.0, 10.0, 2.0)
 
 # --- Upload recipients ---
@@ -132,7 +126,7 @@ def safe_format(template: str, mapping: dict) -> str:
 if df is not None and not df.empty:
     st.subheader("Preview (first row)")
     first = df.iloc[0].to_dict()
-    first.setdefault("sender", from_email)
+    first.setdefault("sender", FROM_EMAIL)
     st.markdown("**Subject preview:**")
     st.write(safe_format(subject_tpl, first))
     st.markdown("**Body preview:**")
@@ -140,8 +134,8 @@ if df is not None and not df.empty:
 
 # ---------------- Send Emails ----------------
 if st.button("Send Emails"):
-    if not from_email or not smtp_pass:
-        st.error("Please provide your email and app password.")
+    if not smtp_pass:
+        st.error("Please provide your SMTP password / App password.")
         st.stop()
     if df is None or df.empty:
         st.error("Please upload a CSV with recipients.")
@@ -153,7 +147,7 @@ if st.button("Send Emails"):
 
     for idx, row in df.iterrows():
         rowd = {str(k): clean_value(v) for k, v in row.to_dict().items()}
-        rowd.setdefault("sender", from_email)
+        rowd.setdefault("sender", FROM_EMAIL)
         rowd.setdefault("cost", str(cost))
         rowd.setdefault("currency", currency)
         rowd.setdefault("company", "")
@@ -174,7 +168,7 @@ if st.button("Send Emails"):
 
         # Compose email
         msg = MIMEMultipart()
-        msg["From"] = from_email
+        msg["From"] = FROM_EMAIL
         to_name_clean = clean_value(rowd.get("name", ""))
         if to_name_clean:
             msg["To"] = formataddr((str(Header(to_name_clean, "utf-8")), recip_addr))
@@ -185,8 +179,8 @@ if st.button("Send Emails"):
 
         try:
             context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(smtp_host, smtp_port, context=context) as server:
-                server.login(smtp_user, smtp_pass)
+            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context) as server:
+                server.login(FROM_EMAIL, smtp_pass)
                 server.send_message(msg)
             st.success(f"Sent to {recip_addr}")
             logs.append({**rowd, "__status": "sent"})
