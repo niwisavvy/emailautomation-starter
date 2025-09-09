@@ -197,9 +197,9 @@ if send_clicked:
         msg.attach(MIMEText(body_text, "plain", "utf-8"))
 
         try:
-            if USE_TLS:
+            if USE_SSL:
                 with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-                    server.starttls()
+                    server.startssl()
                     server.login(from_email, app_password)
                     server.send_message(msg)
             else:
