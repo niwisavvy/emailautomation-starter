@@ -20,6 +20,27 @@ if uploaded_file:
     df = pd.read_csv(uploaded_file)
     st.dataframe(df)
 
+import io
+
+# --- Provide sample CSV template ---
+st.markdown("### Download Sample CSV")
+sample_data = pd.DataFrame({
+    "email": ["john.doe@example.com", "jane.smith@example.com"],
+    "name": ["John Doe", "Jane Smith"],
+    "company": ["Acme Corp", "Globex Inc"]
+})
+
+# Convert to CSV
+csv_buffer = io.StringIO()
+sample_data.to_csv(csv_buffer, index=False)
+st.download_button(
+    label="📥 Download sample CSV",
+    data=csv_buffer.getvalue(),
+    file_name="sample_recipients.csv",
+    mime="text/csv",
+    key="download_sample_csv"
+)
+
 # --- Email configuration (frontend only) ---
 st.subheader("Email configuration")
 from_email = st.text_input("Your email address", key="from_email")
