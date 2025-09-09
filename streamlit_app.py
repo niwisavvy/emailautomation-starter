@@ -14,16 +14,22 @@ st.title("Email Automation Tool")
 
 # --- Upload CSV ---
 st.subheader("Upload recipient list")
-uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+uploaded_file = st.file_uploader("Upload CSV file", type=["csv"], key="csv_uploader")
+df = None
 if uploaded_file:
     df = pd.read_csv(uploaded_file)
     st.dataframe(df)
 
 # --- Email configuration (frontend only) ---
 st.subheader("Email configuration")
-from_email = st.text_input("Your email address")
-app_password = st.text_input("App password", type="password")
-from_name = st.text_input("Your name (optional)")
+from_email = st.text_input("Your email address", key="from_email")
+app_password = st.text_input("App password", type="password", key="app_password")
+from_name = st.text_input("Your name (optional)", key="from_name")
+
+# --- Proposal details ---
+st.subheader("Cost Associated")
+currency = st.selectbox("Currency", ["USD", "AED"], key="currency_select")
+cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=1000.0, key="cost_input")
 
 # --- Compose message ---
 st.subheader("Compose message")
@@ -35,8 +41,7 @@ subject_options = [
     "Exclusive offer for {name}",
     "Your personalized proposal from {sender}"
 ]
-subject_tpl = st.selectbox("Choose a subject line", subject_options)
-
+subject_tpl = st.selectbox("Choose a subject line", subject_options, key="subject_select")
 
 # Body template options (predefined)
 body_templates = {
@@ -63,67 +68,40 @@ body_templates = {
     )
 }
 
-
-
 # Choose body template
 st.subheader("Message body")
-body_choice = st.selectbox("Choose a body template", list(body_templates.keys()))
-body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250)
-
-for idx, row in df.iterrows():
-    rowd = row.to_dict()
-
-    # Skip rows without email
-    if not rowd.get("email"):
-        skipped.append(rowd.get("name", f"Row {idx}"))
-        continue
-
-    # Fill placeholders with defaults
-    rowd.setdefault("sender", from_name or from_email)
-    rowd.setdefault("cost", cost)
-    rowd.setdefault("currency", currency)
-    rowd.setdefault("company", "your company")
-    rowd.setdefault("name", "there")
-
-    # ✅ subj must be inside the loop
-    subj = subject_tpl.format(**rowd)
-    body = body_tpl.format(**rowd)
-
-    msg = MIMEMultipart()
-    msg["From"] = f"{from_name or from_email} <{from_email}>"
-    msg["To"] = rowd["email"]
-    msg["Subject"] = subj
-    msg.attach(MIMEText(body, "plain"))
-
-    try:
-        ...
-
-# Proposal details
-st.subheader("Cost Associated")
-currency = st.selectbox("Currency", ["USD", "AED"])
-cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=1000.0)
+body_choice = st.selectbox("Choose a body template", list(body_templates.keys()), key="body_template_select")
+body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250, key="body_text")
 
 # --- Send emails ---
-if st.button("Send Emails"):
+if st.button("Send Emails", key="send_emails_btn"):
     if not from_email or not app_password:
         st.error("Please provide your email and app password.")
-    elif uploaded_file is None:
+    elif df is None:
         st.error("Please upload a CSV file with recipients.")
     else:
         progress = st.progress(0)
-        for idx, row in enumerate(df.iterrows()):
-            i, rowd = row
+        skipped = []  # collect skipped recipients
 
-            # Fill placeholders
-            rowd = dict(rowd)
+        for idx, row in df.iterrows():
+            rowd = row.to_dict()
+
+            # Skip rows without email
+            if not rowd.get("email"):
+                skipped.append(rowd.get("name", f"Row {idx}"))
+                continue
+
+            # Fill placeholders with defaults
             rowd.setdefault("sender", from_name or from_email)
             rowd.setdefault("cost", cost)
             rowd.setdefault("currency", currency)
+            rowd.setdefault("company", "your company")
+            rowd.setdefault("name", "there")
 
-            msg = MIMEMultipart()
             subj = subject_tpl.format(**rowd)
             body = body_tpl.format(**rowd)
 
+            msg = MIMEMultipart()
             msg["From"] = f"{from_name or from_email} <{from_email}>"
             msg["To"] = rowd["email"]
             msg["Subject"] = subj
@@ -145,3 +123,8 @@ if st.button("Send Emails"):
                 st.error(f"Failed to send to {rowd['email']}: {e}")
             
             progress.progress((idx + 1) / len(df))
+
+        # Show skipped recipients
+        if skipped:
+            st.warning("Skipped recipients (no email found):")
+            st.write(", ".join(skipped))
