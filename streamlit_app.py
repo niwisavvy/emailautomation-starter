@@ -186,8 +186,8 @@ if send_clicked:
 
         subj_text = strip_non_ascii(safe_format(subject_tpl, rowd))
         body_text = strip_non_ascii(safe_format(body_tpl, rowd))
-        subj_text = safe_format(subject_tpl, rowd)
-        body_text = safe_format(body_tpl, rowd)
+        #subj_text = safe_format(subject_tpl, rowd)
+        #body_text = safe_format(body_tpl, rowd)
 
         # Build message
         msg = MIMEMultipart()
