@@ -25,7 +25,7 @@ smtp_pass_default = st.secrets.get("SMTP_PASS", "") if hasattr(st, "secrets") el
 #st.subheader("SMTP settings (use Streamlit Secrets in cloud for safety)")
 #SMTP_SERVER = "smtp.gmail.com"
 #SMTP_PORT = 587
-#USE_TLS = True
+USE_TLS = True
 #from_email = st.text_input("From email", value=smtp_from_default)
 
 # ---------------- Helpers ----------------
