@@ -14,8 +14,8 @@ from email.mime.multipart import MIMEMultipart
 st.set_page_config(page_title="Email Automation Tool")
 
 # --- safe defaults from Streamlit secrets (when deployed) ---
-#SMTP_SERVER = st.secrets.get("SMTP_HOST", "smtp.gmail.com") if hasattr(st, "secrets") else "smtp.gmail.com"
-#SMTP_PORT = int(st.secrets.get("SMTP_PORT", 587)) if hasattr(st, "secrets") else 587
+SMTP_SERVER = st.secrets.get("SMTP_HOST", "smtp.gmail.com") if hasattr(st, "secrets") else "smtp.gmail.com"
+SMTP_PORT = int(st.secrets.get("SMTP_PORT", 587)) if hasattr(st, "secrets") else 587
 smtp_user_default = st.secrets.get("SMTP_USER", "") if hasattr(st, "secrets") else ""
 smtp_from_default = st.secrets.get("SMTP_FROM", smtp_user_default) if hasattr(st, "secrets") else smtp_user_default
 smtp_pass_default = st.secrets.get("SMTP_PASS", "") if hasattr(st, "secrets") else ""
@@ -23,8 +23,8 @@ smtp_pass_default = st.secrets.get("SMTP_PASS", "") if hasattr(st, "secrets") el
 # --- Email (SMTP) settings ---
 
 #st.subheader("SMTP settings (use Streamlit Secrets in cloud for safety)")
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
+#SMTP_SERVER = "smtp.gmail.com"
+#SMTP_PORT = 587
 USE_TLS = True
 #from_email = st.text_input("From email", value=smtp_from_default)
 
