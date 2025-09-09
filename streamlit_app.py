@@ -70,6 +70,11 @@ st.subheader("Message body")
 body_choice = st.selectbox("Choose a body template", list(body_templates.keys()))
 body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250)
 
+# Proposal details
+st.subheader("Cost Associated")
+currency = st.selectbox("Currency", ["USD", "AED"])
+cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=1000.0)
+
 # --- Send emails ---
 if st.button("Send Emails"):
     if not from_email or not app_password:
@@ -112,7 +117,3 @@ if st.button("Send Emails"):
                 st.error(f"Failed to send to {rowd['email']}: {e}")
             
             progress.progress((idx + 1) / len(df))
-# Proposal details
-st.subheader("Cost Associated")
-currency = st.selectbox("Currency", ["USD", "AED"])
-cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=1000.0)
