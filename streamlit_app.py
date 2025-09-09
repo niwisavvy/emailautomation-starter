@@ -54,6 +54,11 @@ def safe_format(template: str, mapping: dict) -> str:
     """Format template safely with missing keys allowed."""
     return template.format_map(defaultdict(str, mapping))
 
+def strip_non_ascii(s: str) -> str:
+    """Remove non-ASCII characters safely."""
+    if not isinstance(s, str):
+        return s
+    return ''.join(ch if ord(ch) < 128 else ' ' for ch in s)
 
 # ---------------- Upload & Sample CSV ----------------
 st.title("Email Automation Tool")
