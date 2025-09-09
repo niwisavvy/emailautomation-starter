@@ -25,7 +25,6 @@ SMTP_PORT = 465
 FROM_EMAIL = st.text_input("Your Email ID")  # <-- replace with your email
 
 # --- SMTP password input only ---
-st.subheader("SMTP password / App Password")
 smtp_pass = st.text_input("SMTP password / App Password", type="password")
 
 # --- Pause configuration ---
