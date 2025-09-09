@@ -170,12 +170,26 @@ if st.button("Send Emails", key="send_emails_btn"):
         subj_text = safe_format(subject_tpl, rowd)
         body_text = safe_format(body_tpl, rowd)
 
-        # build message
+        # build message (UTF-8 safe headers)
         msg = MIMEMultipart()
-        msg["From"] = formataddr((str(Header(from_name or from_email, "utf-8")), from_email))
-        msg["To"] = recip_addr
+
+        # From header
+        from_header = formataddr(
+            (str(Header(from_name or from_email, "utf-8")), from_email)
+        )
+
+        # To header (use recipient name if available, otherwise just email)
+        to_header = formataddr(
+            (str(Header(rowd.get("name", ""), "utf-8")), recip_addr)
+        )
+
+        msg["From"] = from_header
+        msg["To"] = to_header
         msg["Subject"] = str(Header(subj_text, "utf-8"))
+
+        # body (UTF-8 safe)
         msg.attach(MIMEText(body_text, "plain", "utf-8"))
+
 
         try:
             if USE_TLS:
