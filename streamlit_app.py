@@ -193,8 +193,8 @@ if st.button("Send Emails", key="send_emails_btn"):
         else:
             msg["To"] = recip_addr
 
-        msg["From"] = from_header
-        msg["To"] = to_header
+        # msg["From"] = from_header
+        # msg["To"] = to_header
         msg["Subject"] = subj_text.encode("utf-8", "ignore").decode("utf-8")
         msg.attach(MIMEText(body_text, "plain", "utf-8"))
 
