@@ -28,6 +28,15 @@ def clean_value(val):
                .strip()
         )
     return val
+
+def ascii_safe(s: str) -> str:
+    """Remove or replace non-ASCII characters from headers."""
+    if not s:
+        return ""
+    s = str(s).replace("\xa0", " ").replace("\u200b", "").strip()
+    # Replace non-ASCII with '?'
+    return "".join(ch if ord(ch) < 128 else "?" for ch in s)
+
 def clean_header(val):
     """Clean string for email header: remove non-ASCII chars."""
     if not val:
@@ -181,11 +190,12 @@ if st.button("Send Emails", key="send_emails_btn"):
 
         # build message (UTF-8 safe headers)
         msg = MIMEMultipart()
-        msg["From"] = from_email
-        msg["To"] = recip_addr
-        msg["Subject"] = subj_text  # safe_format ensures placeholders are strings
+        msg["From"] = ascii_safe(from_email)
+        msg["To"] = ascii_safe(recip_addr)
+        msg["Subject"] = ascii_safe(subj_text)
+        
+        # Body (UTF-8 safe)
         msg.attach(MIMEText(body_text, "plain", "utf-8"))
-
 
         try:
             if USE_TLS:
