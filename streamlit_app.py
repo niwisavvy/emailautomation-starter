@@ -118,15 +118,17 @@ if st.button("Send Emails", key="send_emails_btn"):
             rowd.setdefault("currency", currency)
             rowd.setdefault("company", "your company")
             rowd.setdefault("name", "there")
-
+            
+            from email.header import Header
+            
             subj = subject_tpl.format(**rowd)
             body = body_tpl.format(**rowd)
 
             msg = MIMEMultipart()
             msg["From"] = f"{from_name or from_email} <{from_email}>"
             msg["To"] = rowd["email"]
-            msg["Subject"] = subj
-            msg.attach(MIMEText(body, "plain"))
+            msg["Subject"] = str(Header(subj, "utf-8")) 
+            msg.attach(MIMEText(body, "plain", "utf-8"))
 
             try:
                 if USE_TLS:
