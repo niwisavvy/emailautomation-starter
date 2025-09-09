@@ -1,49 +1,133 @@
 import io
 import re
 import unicodedata
-import time
 from collections import defaultdict
 from email.header import Header
 from email.utils import formataddr, parseaddr
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import smtplib
-import ssl
 
 import streamlit as st
 import pandas as pd
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-# --- Streamlit page config ---
-st.set_page_config(page_title="Email Automation 360", page_icon="📧")
-st.title("📧 Email Automation 360 — Hardcoded SMTP")
+# --- Email (SMTP) settings ---
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+USE_TLS = True
 
-# --- Hardcoded SMTP config ---
-SMTP_HOST = "smtp.gmail.com"
-SMTP_PORT = 465
+st.set_page_config(page_title="Email Automation Tool")
 
+# ---------------- Helpers ----------------
+def clean_text(value: object) -> str:
+    """Convert to str, replace NBSP, normalize, remove control chars, collapse whitespace."""
+    if pd.isna(value):
+        return ""
+    s = str(value)
+    # normalize and replace NBSP with normal space
+    s = s.replace("\xa0", " ")
+    s = unicodedata.normalize("NFKC", s)
+    # remove control chars (tabs/newlines) and excessive whitespace
+    s = re.sub(r"[\r\n\t]+", " ", s)
+    s = re.sub(r"\s+", " ", s)
+    return s.strip()
 
-FROM_EMAIL = st.text_input("Your Email ID")  # <-- replace with your email
+def clean_email_address(raw_email: str) -> str | None:
+    """
+    Parse and clean an email address string. Returns a cleaned ASCII email address
+    (domains punycoded) or None if no valid address found.
+    """
+    if not raw_email:
+        return None
+    raw_email = clean_text(raw_email)
+    # parseaddr extracts "Name" and "addr"
+    _, addr = parseaddr(raw_email)
 
-# --- SMTP password input only ---
-smtp_pass = st.text_input("SMTP password / App Password", type="password")
+    # If parseaddr failed to extract, try to strip angle brackets/spaces
+    if not addr:
+        addr = re.sub(r"[<>\s\"']", "", raw_email)
 
-# --- Pause configuration ---
-st.write("")
-pause = 200.0  # 200 seconds pause between emails
+    addr = addr.replace("\xa0", "")  # remove any NBSP remnants
+    addr = addr.strip()
 
-# --- Upload recipients ---
-st.subheader("Recipients CSV")
-st.caption("Upload a CSV with at least an `email` column; extra columns (name, company) become placeholders.")
-file = st.file_uploader("Upload CSV", type=["csv"])
-df = None
-if file:
+    # basic sanity: must contain '@'
+    if "@" not in addr:
+        return None
+
     try:
-        df = pd.read_csv(file)
-        st.write(df.head())
-    except Exception as e:
-        st.error(f"Could not read CSV: {e}")
+        local, domain = addr.rsplit("@", 1)
+    except ValueError:
+        return None
 
-# --- Compose message ---
+    # safe-clean local and domain of stray spaces
+    local = local.strip()
+    domain = domain.strip()
+
+    # punycode domain (IDN) -> ASCII, if domain contains unicode
+    try:
+        domain_ascii = domain.encode("idna").decode("ascii")
+    except Exception:
+        # fallback: remove non-ascii from domain (conservative)
+        domain_ascii = "".join(ch for ch in domain if ord(ch) < 128)
+
+    cleaned = f"{local}@{domain_ascii}"
+    # final sanity check
+    if "@" not in cleaned or len(cleaned) < 4:
+        return None
+    # remove any remaining whitespace characters
+    cleaned = re.sub(r"\s+", "", cleaned)
+    return cleaned
+
+def safe_format(template: str, mapping: dict) -> str:
+    """Format using format_map so missing keys become empty strings."""
+    return template.format_map(defaultdict(str, mapping))
+
+# ---------------- UI: upload & sample CSV ----------------
+st.title("Email Automation Tool")
+st.subheader("Upload recipient list")
+uploaded_file = st.file_uploader("Upload CSV file", type=["csv"], key="csv_uploader")
+
+# sample csv for users
+sample_df = pd.DataFrame({
+    "email": ["john.doe@example.com", "jane.smith@example.com"],
+    "name": ["John Doe", "Jane Smith"],
+    "company": ["Acme Corp", "Globex Inc"]
+})
+buf = io.StringIO()
+sample_df.to_csv(buf, index=False)
+st.download_button("📥 Download sample CSV", data=buf.getvalue(),
+                   file_name="sample_recipients.csv", mime="text/csv",
+                   key="download_sample_csv")
+
+df = None
+if uploaded_file:
+    try:
+        df = pd.read_csv(uploaded_file)
+    except Exception:
+        # try latin1 fallback
+        uploaded_file.seek(0)
+        try:
+            df = pd.read_csv(uploaded_file, encoding="latin1")
+        except Exception as e:
+            st.error(f"Couldn't read CSV: {e}")
+            df = None
+    if df is not None:
+        st.dataframe(df)
+
+# ---------------- Email config & message ----------------
+st.subheader("Email configuration")
+from_email_raw = st.text_input("Your email address", key="from_email")
+app_password = st.text_input("App password", type="password", key="app_password")
+from_name_raw = st.text_input("Your name (optional)", key="from_name")
+
+# clean inputs
+from_email = clean_text(from_email_raw)
+from_name = clean_text(from_name_raw)
+
+st.subheader("Cost Associated")
+currency = st.selectbox("Currency", ["USD", "AED"], key="currency_select")
+cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=1000.0, key="cost_input")
+
 st.subheader("Compose message")
 subject_options = [
     "Special proposal for {company}",
@@ -51,14 +135,8 @@ subject_options = [
     "Exclusive offer for {name}",
     "Your personalized proposal from {sender}"
 ]
-subject_tpl = st.selectbox("Choose a subject line", subject_options)
+subject_tpl = st.selectbox("Choose a subject line", subject_options, key="subject_select")
 
-# Cost input
-st.subheader("Proposal details")
-currency = st.selectbox("Currency", ["USD", "AED"])
-cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=10.0, value=1000.0)
-
-# Body templates
 body_templates = {
     "Proposal (standard)": (
         "Hi {name},\n\n"
@@ -82,112 +160,153 @@ body_templates = {
         "Cheers,\n{sender}"
     )
 }
-st.subheader("Message body")
-body_choice = st.selectbox("Choose a body template", list(body_templates.keys()))
-body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250)
+body_choice = st.selectbox("Choose a body template", list(body_templates.keys()), key="body_template_select")
+body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250, key="body_text")
 
-# ---------------- Helpers ----------------
-def clean_value(val):
-    """Clean cell values: remove hidden chars and non-ASCII."""
-    if isinstance(val, str):
-        val = val.replace("\xa0", " ").replace("\u200b", "").strip()
-        val = unicodedata.normalize("NFKD", val)
-        val = "".join(ch for ch in val if ord(ch) < 128)
-        return val
-    return val
-
-def clean_email_address(raw_email: str) -> str | None:
-    """Parse and sanitize an email address string."""
-    if not raw_email:
-        return None
-    raw_email = clean_value(raw_email)
-    _, addr = parseaddr(raw_email)
-    if not addr:
-        addr = re.sub(r"[<>\s\"']", "", raw_email)
-    addr = addr.strip()
-    if "@" not in addr:
-        return None
-    try:
-        local, domain = addr.rsplit("@", 1)
-    except ValueError:
-        return None
-    try:
-        domain_ascii = domain.encode("idna").decode("ascii")
-    except Exception:
-        domain_ascii = "".join(ch for ch in domain if ord(ch) < 128)
-    return f"{local}@{domain_ascii}"
-
-def safe_format(template: str, mapping: dict) -> str:
-    """Format template safely with missing keys allowed."""
-    return template.format_map(defaultdict(str, mapping))
-
-# ---------------- Preview ----------------
-if df is not None and not df.empty:
-    st.subheader("Preview (first row)")
-    first = df.iloc[0].to_dict()
-    first.setdefault("sender", FROM_EMAIL)
-    st.markdown("**Subject preview:**")
-    st.write(safe_format(subject_tpl, first))
-    st.markdown("**Body preview:**")
-    st.write(safe_format(body_tpl, first))
-
-# ---------------- Send Emails ----------------
-if st.button("Send Emails"):
-    if not smtp_pass:
-        st.error("Please provide your SMTP password / App password.")
+# ---------------- Send loop with robust sanitization ----------------
+if st.button("Send Emails", key="send_emails_btn"):
+    if not from_email or not app_password:
+        st.error("Please provide your email and app password.")
         st.stop()
-    if df is None or df.empty:
-        st.error("Please upload a CSV with recipients.")
+    if df is None:
+        st.error("Please upload a CSV file with recipients.")
         st.stop()
+
+    # sanitize df column names
+    df.columns = [clean_text(c) for c in df.columns]
 
     progress = st.progress(0)
     total = len(df)
-    logs = []
+    sent = 0
+    skipped_rows = []
+    failed_rows = []
+
+    # clean sender email once
+    from_email_clean = clean_email_address(from_email) or from_email  # fallback to raw cleaned if parse fails
 
     for idx, row in df.iterrows():
-        rowd = {str(k): clean_value(v) for k, v in row.to_dict().items()}
-        rowd.setdefault("sender", FROM_EMAIL)
+        rowd = {str(k): clean_text(v) for k, v in row.to_dict().items()}
+
+        # skip empty email
+        raw_recipient_field = rowd.get("email", "")
+        recip_addr = clean_email_address(raw_recipient_field)
+        if not recip_addr:
+            skipped_rows.append({**rowd, "__reason": "missing/invalid email"})
+            progress.progress((idx + 1) / total)
+            continue
+
+        # defaults
+        rowd.setdefault("sender", from_name or from_email)
         rowd.setdefault("cost", str(cost))
         rowd.setdefault("currency", currency)
         rowd.setdefault("company", "")
         rowd.setdefault("name", "")
 
-        recip_addr = clean_email_address(rowd.get("email", ""))
-        if not recip_addr:
-            logs.append({**rowd, "__status": "skipped", "__reason": "invalid email"})
-            progress.progress((idx + 1) / total)
-            continue
-
         subj_text = safe_format(subject_tpl, rowd)
         body_text = safe_format(body_tpl, rowd)
 
-        # Compose email
-        msg = MIMEMultipart()
-        msg["From"] = FROM_EMAIL
-        to_name_clean = clean_value(rowd.get("name", ""))
-        if to_name_clean:
-            msg["To"] = formataddr((str(Header(to_name_clean, "utf-8")), recip_addr))
-        else:
-            msg["To"] = recip_addr
-        msg["Subject"] = str(Header(subj_text, "utf-8"))
-        msg.attach(MIMEText(body_text, "plain", "utf-8"))
+        # build message
+        def build_message(display_from_name, from_addr, recip_name, recip_addr, subj, body):
+            msg = MIMEMultipart()
+            # header display names encoded with Header
+            display_from_name = clean_text(display_from_name)
+            recip_name = clean_text(recip_name)
 
+            # Ensure from_addr and recip_addr have any NBSP removed
+            from_addr = (from_addr or "").replace("\xa0", "").strip()
+            recip_addr = (recip_addr or "").replace("\xa0", "").strip()
+
+            # Format From and To with encoded display names
+            msg["From"] = formataddr((str(Header(display_from_name, "utf-8")), from_addr))
+            if recip_name:
+                msg["To"] = formataddr((str(Header(recip_name, "utf-8")), recip_addr))
+            else:
+                msg["To"] = recip_addr
+
+            msg["Subject"] = str(Header(subj, "utf-8"))
+            msg.attach(MIMEText(body, "plain", "utf-8"))
+            return msg
+
+        display_from = rowd.get("sender") or from_name or from_email
+        recip_name = rowd.get("name", "")
+
+        msg = build_message(display_from, from_email_clean, recip_name, recip_addr, subj_text, body_text)
+
+        # attempt send; if an ASCII-encoding error happens, do a stricter cleanup & retry once
         try:
-            context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context) as server:
-                server.login(FROM_EMAIL, smtp_pass)
-                server.send_message(msg)
+            if USE_TLS:
+                with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                    server.starttls()
+                    server.login(from_email, app_password)
+                    server.send_message(msg)
+            else:
+                with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
+                    server.login(from_email, app_password)
+                    server.send_message(msg)
+
+            sent += 1
             st.success(f"Sent to {recip_addr}")
-            logs.append({**rowd, "__status": "sent"})
         except Exception as e:
-            st.error(f"Failed to send to {recip_addr}: {e}")
-            logs.append({**rowd, "__status": "failed", "__reason": str(e)})
+            # try a stricter cleanup if NBSP seems implicated
+            err_str = str(e)
+            # debug info for developer (shows repr so we can see hidden chars)
+            debug_info = {
+                "idx": idx,
+                "orig_email_field": repr(raw_recipient_field),
+                "cleaned_recipient_addr": repr(recip_addr),
+                "recipient_name": repr(recip_name),
+                "from_email_clean": repr(from_email_clean),
+                "display_from": repr(display_from),
+                "subject": repr(subj_text),
+                "error": err_str,
+            }
+            st.error(f"Failed to send to {recip_addr}: {err_str}")
+
+            # If NBSP present in any header candidate, try to replace and resend once
+            if any("\xa0" in v for v in [raw_recipient_field or "", display_from or "", subj_text or ""]):
+                # rebuild cleaned variants
+                cleaned_display_from = display_from.replace("\xa0", " ")
+                cleaned_recip_name = recip_name.replace("\xa0", " ")
+                cleaned_subj = subj_text.replace("\xa0", " ")
+                cleaned_body = body_text.replace("\xa0", " ")
+
+                msg2 = build_message(cleaned_display_from, from_email_clean, cleaned_recip_name, recip_addr, cleaned_subj, cleaned_body)
+                try:
+                    if USE_TLS:
+                        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                            server.starttls()
+                            server.login(from_email, app_password)
+                            server.send_message(msg2)
+                    else:
+                        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
+                            server.login(from_email, app_password)
+                            server.send_message(msg2)
+
+                    sent += 1
+                    st.success(f"Sent to {recip_addr} (after NBSP cleanup retry)")
+                except Exception as e2:
+                    st.error(f"Retry failed for {recip_addr}: {e2}")
+                    failed_rows.append({**rowd, "__reason": f"{err_str} | retry: {e2}"})
+            else:
+                failed_rows.append({**rowd, "__reason": err_str})
 
         progress.progress((idx + 1) / total)
-        time.sleep(pause)
 
-    st.success("Done sending emails.")
-    logs_df = pd.DataFrame(logs)
-    st.dataframe(logs_df)
-    csv = logs_df.to_csv(index=False).encode("utf-8")
-    st.download_button("Download send log (CSV)", data=csv, file_name="send_log.csv", mime="text/csv")
+    st.info(f"Done — attempted {total} rows, sent {sent}, skipped {len(skipped_rows)}, failed {len(failed_rows)}")
+
+    # offer skipped and failed rows for download
+    if skipped_rows:
+        skipped_df = pd.DataFrame(skipped_rows)
+        buf_skipped = io.StringIO()
+        skipped_df.to_csv(buf_skipped, index=False)
+        st.download_button("📥 Download skipped rows", data=buf_skipped.getvalue(),
+                           file_name="skipped_recipients.csv", mime="text/csv",
+                           key="download_skipped")
+
+    if failed_rows:
+        failed_df = pd.DataFrame(failed_rows)
+        buf_failed = io.StringIO()
+        failed_df.to_csv(buf_failed, index=False)
+        st.download_button("📥 Download failed rows (inspect)", data=buf_failed.getvalue(),
+                           file_name="failed_recipients.csv", mime="text/csv",
+                           key="download_failed")
