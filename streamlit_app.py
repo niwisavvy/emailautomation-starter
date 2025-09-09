@@ -182,16 +182,16 @@ if st.button("Send Emails", key="send_emails_btn"):
         # build message (UTF-8 safe headers)
         msg = MIMEMultipart()
 
-        # From header (cleaned)
-        from_header = formataddr(
-            (str(Header(clean_header(from_name) or from_email, "utf-8")), from_email)
-        )
+        # From header (only email, no name to avoid encoding issues)
+        msg["From"] = from_email
 
-        # To header (cleaned)
-        to_header = formataddr(
-            (str(Header(clean_header(rowd.get("name", "")), "utf-8")), recip_addr)
-        )
-
+        # To header (use name if available, else just email)
+        to_name_clean = clean_value(rowd.get("name", "")) or ""
+        to_name_clean = "".join(ch for ch in to_name_clean if ord(ch) < 128)  # strip non-ASCII
+        if to_name_clean:
+            msg["To"] = formataddr((to_name_clean, recip_addr))
+        else:
+            msg["To"] = recip_addr
 
         msg["From"] = from_header
         msg["To"] = to_header
