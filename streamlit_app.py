@@ -70,6 +70,18 @@ st.subheader("Message body")
 body_choice = st.selectbox("Choose a body template", list(body_templates.keys()))
 body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250)
 
+# Fill placeholders
+rowd = dict(rowd)
+rowd.setdefault("sender", from_name or from_email)
+rowd.setdefault("cost", cost)
+rowd.setdefault("currency", currency)
+rowd.setdefault("company", "your company")   # default if missing
+rowd.setdefault("name", "there")             # default if missing
+rowd.setdefault("email", "")                 # avoid KeyError if missing
+
+subj = subject_tpl.format(**rowd)
+body = body_tpl.format(**rowd)
+
 # Proposal details
 st.subheader("Cost Associated")
 currency = st.selectbox("Currency", ["USD", "AED"])
