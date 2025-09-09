@@ -214,9 +214,9 @@ if st.button("Send Emails", key="send_emails_btn"):
 
 
     # --- Reset front-end after sending ---
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
-    st.experimental_rerun()
+    #for key in list(st.session_state.keys()):
+     #   del st.session_state[key]
+    #st.experimental_rerun()
 
     # download skipped/failed rows if any
     if skipped_rows:
