@@ -177,7 +177,7 @@ if send_clicked:
             continue
 
         # Defaults
-        rowd.setdefault("sender", from_name or from_email)
+        rowd.setdefault("sender", from_name)
         rowd.setdefault("cost", str(cost))
         rowd.setdefault("currency", currency)
         rowd.setdefault("company", "")
@@ -188,7 +188,7 @@ if send_clicked:
 
         # Build message
         msg = MIMEMultipart()
-        from_header = formataddr((str(Header(from_name or from_email, "utf-8")), from_email))
+        from_header = formataddr((str(Header(from_name, "utf-8")), from_name))
         to_header = formataddr((str(Header(rowd.get("name", ""), "utf-8")), recip_addr))
 
         msg["From"] = from_header
