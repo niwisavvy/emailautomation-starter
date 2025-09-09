@@ -124,9 +124,8 @@ if st.button("Send Emails"):
         if skipped:
             st.warning("Skipped recipients (no email found):")
             st.write(", ".join(skipped))
-
-subj = subject_tpl.format(**rowd)
-body = body_tpl.format(**rowd)
+            subj = subject_tpl.format(**rowd)
+            body = body_tpl.format(**rowd)
 
 # Proposal details
 st.subheader("Cost Associated")
