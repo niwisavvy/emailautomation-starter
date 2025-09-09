@@ -28,6 +28,15 @@ def clean_value(val):
                .strip()
         )
     return val
+def clean_header(val):
+    """Clean string for email header: remove non-ASCII chars."""
+    if not val:
+        return ""
+    val = str(val).replace("\xa0", " ").replace("\u200b", "").strip()
+    val = "".join(ch for ch in val if ord(ch) < 128)
+    return val
+
+
 
 def clean_email_address(raw_email: str) -> str | None:
     """Parse and sanitize an email address string."""
@@ -173,15 +182,16 @@ if st.button("Send Emails", key="send_emails_btn"):
         # build message (UTF-8 safe headers)
         msg = MIMEMultipart()
 
-        # From header
+        # From header (cleaned)
         from_header = formataddr(
-            (str(Header(from_name or from_email, "utf-8")), from_email)
+            (str(Header(clean_header(from_name) or from_email, "utf-8")), from_email)
         )
 
-        # To header (use recipient name if available, otherwise just email)
+        # To header (cleaned)
         to_header = formataddr(
-            (str(Header(rowd.get("name", ""), "utf-8")), recip_addr)
+            (str(Header(clean_header(rowd.get("name", "")), "utf-8")), recip_addr)
         )
+
 
         msg["From"] = from_header
         msg["To"] = to_header
