@@ -15,7 +15,7 @@ st.set_page_config(page_title="Email Automation Tool")
 
 # --- safe defaults from Streamlit secrets (when deployed) ---
 SMTP_SERVER = st.secrets.get("SMTP_HOST", "smtp.gmail.com") if hasattr(st, "secrets") else "smtp.gmail.com"
-SMTP_PORT = int(st.secrets.get("SMTP_PORT", 465)) if hasattr(st, "secrets") else 465
+SMTP_PORT = int(st.secrets.get("SMTP_PORT", 587)) if hasattr(st, "secrets") else 587
 smtp_user_default = st.secrets.get("SMTP_USER", "") if hasattr(st, "secrets") else ""
 smtp_from_default = st.secrets.get("SMTP_FROM", smtp_user_default) if hasattr(st, "secrets") else smtp_user_default
 smtp_pass_default = st.secrets.get("SMTP_PASS", "") if hasattr(st, "secrets") else ""
@@ -63,6 +63,8 @@ def clean_email_address(raw_email: str) -> str | None:
 def safe_format(template: str, mapping: dict) -> str:
     """Format template safely with missing keys allowed."""
     return template.format_map(defaultdict(str, mapping))
+
+pause = st.slider("Pause between emails (seconds)", 0.0, 200.0, 10.0)
 
 # ---------------- Upload & Sample CSV ----------------
 st.title("Email Automation Tool")
