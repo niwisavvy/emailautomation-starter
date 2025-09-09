@@ -26,11 +26,9 @@ FROM_EMAIL = "youremail@example.com"  # <-- replace with your email
 st.subheader("SMTP password / App Password")
 smtp_pass = st.text_input("SMTP password / App Password", type="password")
 
-# --- Test mode & throttle ---
+# --- Pause configuration ---
 st.write("")
-test_mode = st.checkbox("TEST MODE — send all messages to this address", value=True)
-test_email = st.text_input("Test recipient email (used in TEST MODE)", value=FROM_EMAIL)
-pause = st.slider("Pause between emails (seconds)", 0.0, 10.0, 2.0)
+pause = 200.0  # 200 seconds pause between emails
 
 # --- Upload recipients ---
 st.subheader("Recipients CSV")
@@ -158,10 +156,6 @@ if st.button("Send Emails"):
             logs.append({**rowd, "__status": "skipped", "__reason": "invalid email"})
             progress.progress((idx + 1) / total)
             continue
-
-        # Use test mode
-        if test_mode:
-            recip_addr = test_email
 
         subj_text = safe_format(subject_tpl, rowd)
         body_text = safe_format(body_tpl, rowd)
