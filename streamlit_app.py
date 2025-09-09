@@ -11,10 +11,20 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+# --- safe defaults from Streamlit secrets (when deployed) ---
+smtp_host_default = st.secrets.get("SMTP_HOST", "smtp.gmail.com") if hasattr(st, "secrets") else "smtp.gmail.com"
+smtp_port_default = int(st.secrets.get("SMTP_PORT", 465)) if hasattr(st, "secrets") else 465
+smtp_user_default = st.secrets.get("SMTP_USER", "") if hasattr(st, "secrets") else ""
+smtp_from_default = st.secrets.get("SMTP_FROM", smtp_user_default) if hasattr(st, "secrets") else smtp_user_default
+smtp_pass_default = st.secrets.get("SMTP_PASS", "") if hasattr(st, "secrets") else ""
+
 # --- Email (SMTP) settings ---
+
+st.subheader("SMTP settings (use Streamlit Secrets in cloud for safety)")
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 USE_TLS = True
+from_email = st.text_input("From email", value=smtp_from_default)
 
 st.set_page_config(page_title="Email Automation Tool")
 
