@@ -4,7 +4,7 @@ import unicodedata
 from collections import defaultdict
 from email.header import Header
 from email.utils import formataddr, parseaddr
-
+import time
 import streamlit as st
 import pandas as pd
 import smtplib
@@ -228,6 +228,7 @@ if send_clicked:
         try:
             if USE_TLS:
                 with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                    
                     server.starttls()
                     server.login(from_email, app_password)
                     server.send_message(msg)
