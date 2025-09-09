@@ -135,8 +135,29 @@ body_templates = {
 body_choice = st.selectbox("Choose a body template", list(body_templates.keys()), key="body_template_select")
 body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250, key="body_text")
 
-# ---------------- Send Emails ----------------
-if st.button("Send Emails", key="send_emails_btn"):
+# ---------------- Send & Reset Buttons ----------------
+col1, col2 = st.columns(2)
+
+with col1:
+    send_clicked = st.button("🚀 Send Emails", key="send_emails_btn")
+
+with col2:
+    reset_clicked = st.button("🔄 Reset", key="reset_btn")
+
+# Handle reset
+if reset_clicked:
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.experimental_rerun()
+
+# Handle send
+if send_clicked:
+    if not from_email or not app_password:
+        st.error("Please provide your email and app password.")
+        st.stop()
+    if df is None:
+        st.error("Please upload a CSV file with recipients.")
+        st.stop()
     if not from_email or not app_password:
         st.error("Please provide your email and app password.")
         st.stop()
