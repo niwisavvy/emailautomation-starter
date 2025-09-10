@@ -196,8 +196,17 @@ if send_clicked:
 
         # Build message
         msg = MIMEMultipart()
-        from_header = formataddr((str(Header(from_name, "utf-8")), from_name))
-        to_header = formataddr((str(Header(rowd.get("name", ""), "utf-8")), recip_addr))
+        from_display = strip_non_ascii(from_display)
+        to_display = strip_non_ascii(to_display)
+
+        #from_header = formataddr((str(Header(from_name, "utf-8")), from_name))
+        #to_header = formataddr((str(Header(rowd.get("name", ""), "utf-8")), recip_addr))
+        from_display = clean_value(from_name or "")
+        to_display = clean_value(rowd.get("name", "") or "")
+
+        from_header = formataddr((str(Header(from_display, "utf-8")), from_email))
+        to_header = formataddr((str(Header(to_display, "utf-8")), recip_addr))
+
 
         msg["From"] = from_header
         msg["To"] = to_header
