@@ -19,15 +19,15 @@ SMTP_PORT = 587
 USE_TLS = True
 
 # ---------------- Helpers ----------------
-def clean_value(val):
-    """Clean individual cell values (remove invisible characters)."""
-    if isinstance(val, str):
-        return (
-            val.replace("\xa0", " ")      # non-breaking space
-               .replace("\u200b", "")     # zero-width space
-               .strip()
-        )
-    return val
+def clean_display_name(name: str) -> str:
+    """Clean and normalize display names for email headers."""
+    if not name:
+        return ""
+    # Replace non-breaking spaces and zero-width spaces with normal space
+    name = name.replace("\xa0", " ").replace("\u200b", "")
+    # Strip leading/trailing spaces
+    name = name.strip()
+    return name
 
 def clean_email_address(raw_email: str) -> str | None:
     """Parse and sanitize an email address string."""
@@ -189,8 +189,11 @@ if send_clicked:
         rowd.setdefault("name", "")
 
 
-        subj_text = strip_non_ascii(safe_format(subject_tpl, rowd))
-        body_text = strip_non_ascii(safe_format(body_tpl, rowd))
+
+        subj_text = safe_format(subject_tpl, rowd)
+        body_text = safe_format(body_tpl, rowd)
+        #subj_text = strip_non_ascii(safe_format(subject_tpl, rowd))
+        #body_text = strip_non_ascii(safe_format(body_tpl, rowd))
         #subj_text = safe_format(subject_tpl, rowd)
         #body_text = safe_format(body_tpl, rowd)
 
@@ -200,12 +203,9 @@ if send_clicked:
 
         #from_header = formataddr((str(Header(from_name, "utf-8")), from_name))
         #to_header = formataddr((str(Header(rowd.get("name", ""), "utf-8")), recip_addr))
-        from_display = clean_value(from_name or "")
-        to_display = clean_value(rowd.get("name", "") or "")
-        
-        from_display = strip_non_ascii(from_display)
-        to_display = strip_non_ascii(to_display)
-        
+        from_display = clean_display_name(from_name or "")
+        to_display = clean_display_name(rowd.get("name", "") or "")
+
         from_header = formataddr((str(Header(from_display, "utf-8")), from_email))
         to_header = formataddr((str(Header(to_display, "utf-8")), recip_addr))
 
