@@ -19,15 +19,15 @@ SMTP_PORT = 587
 USE_TLS = True
 
 # ---------------- Helpers ----------------
-def clean_display_name(name: str) -> str:
-    """Clean and normalize display names for email headers."""
-    if not name:
-        return ""
-    # Replace non-breaking spaces and zero-width spaces with normal space
-    name = name.replace("\xa0", " ").replace("\u200b", "")
-    # Strip leading/trailing spaces
-    name = name.strip()
-    return name
+def clean_value(val):
+    """Clean individual cell values (remove invisible characters)."""
+    if isinstance(val, str):
+        return (
+            val.replace("\xa0", " ")      # non-breaking space
+               .replace("\u200b", "")     # zero-width space
+               .strip()
+        )
+    return val
 
 def clean_email_address(raw_email: str) -> str | None:
     """Parse and sanitize an email address string."""
@@ -54,18 +54,22 @@ def safe_format(template: str, mapping: dict) -> str:
     """Format template safely with missing keys allowed."""
     return template.format_map(defaultdict(str, mapping))
 
-def strip_non_ascii(s: str) -> str:
-    """Remove non-ASCII characters safely."""
-    if not isinstance(s, str):
-        return s
-    return ''.join(ch if ord(ch) < 128 else ' ' for ch in s)
+def clean_display_name(name: str) -> str:
+    """Clean and normalize display names for email headers."""
+    if not name:
+        return ""
+    # Replace non-breaking spaces and zero-width spaces with normal space
+    name = name.replace("\xa0", " ").replace("\u200b", "")
+    # Strip leading/trailing spaces
+    name = name.strip()
+    return name
 
 # ---------------- Upload & Sample CSV ----------------
 st.title("Email Automation Tool")
 st.subheader("Upload recipient list")
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"], key="csv_uploader")
 
-# Sample CSV
+# Sample CSV for download
 sample_df = pd.DataFrame({
     "email": ["john.doe@example.com", "jane.smith@example.com"],
     "name": ["John Doe", "Jane Smith"],
@@ -73,9 +77,13 @@ sample_df = pd.DataFrame({
 })
 buf = io.StringIO()
 sample_df.to_csv(buf, index=False)
-st.download_button("📥 Download sample CSV", data=buf.getvalue(),
-                   file_name="sample_recipients.csv", mime="text/csv",
-                   key="download_sample_csv")
+st.download_button(
+    "📥 Download sample CSV",
+    data=buf.getvalue(),
+    file_name="sample_recipients.csv",
+    mime="text/csv",
+    key="download_sample_csv"
+)
 
 df = None
 if uploaded_file:
@@ -188,27 +196,18 @@ if send_clicked:
         rowd.setdefault("company", "")
         rowd.setdefault("name", "")
 
-
-
+        # Use safe_format without stripping non-ASCII to allow UTF-8 characters
         subj_text = safe_format(subject_tpl, rowd)
         body_text = safe_format(body_tpl, rowd)
-        #subj_text = strip_non_ascii(safe_format(subject_tpl, rowd))
-        #body_text = strip_non_ascii(safe_format(body_tpl, rowd))
-        #subj_text = safe_format(subject_tpl, rowd)
-        #body_text = safe_format(body_tpl, rowd)
 
         # Build message
         msg = MIMEMultipart()
 
-
-        #from_header = formataddr((str(Header(from_name, "utf-8")), from_name))
-        #to_header = formataddr((str(Header(rowd.get("name", ""), "utf-8")), recip_addr))
         from_display = clean_display_name(from_name or "")
         to_display = clean_display_name(rowd.get("name", "") or "")
 
         from_header = formataddr((str(Header(from_display, "utf-8")), from_email))
         to_header = formataddr((str(Header(to_display, "utf-8")), recip_addr))
-
 
         msg["From"] = from_header
         msg["To"] = to_header
@@ -250,13 +249,21 @@ if send_clicked:
         skipped_df = pd.DataFrame(skipped_rows)
         buf_skipped = io.StringIO()
         skipped_df.to_csv(buf_skipped, index=False)
-        st.download_button("📥 Download skipped rows", data=buf_skipped.getvalue(),
-                           file_name="skipped_recipients.csv", mime="text/csv",
-                           key="download_skipped")
+        st.download_button(
+            "📥 Download skipped rows",
+            data=buf_skipped.getvalue(),
+            file_name="skipped_recipients.csv",
+            mime="text/csv",
+            key="download_skipped"
+        )
     if failed_rows:
         failed_df = pd.DataFrame(failed_rows)
         buf_failed = io.StringIO()
         failed_df.to_csv(buf_failed, index=False)
-        st.download_button("📥 Download failed rows", data=buf_failed.getvalue(),
-                           file_name="failed_recipients.csv", mime="text/csv",
-                           key="download_failed")
+        st.download_button(
+            "📥 Download failed rows",
+            data=buf_failed.getvalue(),
+            file_name="failed_recipients.csv",
+            mime="text/csv",
+            key="download_failed"
+        )
