@@ -171,21 +171,21 @@ body_templates = {
     📧 james.k@ciolook.com  
     🌍 USA | UAE | India | Kenya
     """
-    } 
-    ),
-    "Follow-up (gentle reminder)": (
-        "Hi {name},\n\n"
-        "I just wanted to follow up on my earlier message about {company}. "
-        "This opportunity is still available for {cost} {currency}, "
-        "and I’d love to hear your thoughts.\n\n"
-        "Best regards,\n{sender}"
-    ),
-    "Short intro (very concise)": (
-        "Hi {name},\n\n"
-        "Quick note to share a proposal for {company}: {cost} {currency}. "
-        "Would you like to discuss?\n\n"
-        "Cheers,\n{sender}"
-    )
+    
+    
+   # "Follow-up (gentle reminder)": (
+    #    "Hi {name},\n\n"
+     #   "I just wanted to follow up on my earlier message about {company}. "
+      #  "This opportunity is still available for {cost} {currency}, "
+       # "and I’d love to hear your thoughts.\n\n"
+        #"Best regards,\n{sender}"
+  #  ),
+   # "Short intro (very concise)": (
+    #    "Hi {name},\n\n"
+     #   "Quick note to share a proposal for {company}: {cost} {currency}. "
+      #  "Would you like to discuss?\n\n"
+       # "Cheers,\n{sender}"
+   # )
 }
 body_choice = st.selectbox("Choose a body template", list(body_templates.keys()), key="body_template_select")
 body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250, key="body_text")
