@@ -124,16 +124,16 @@ st.subheader("Compose message")
 
 subject_tpl = st.text_input(
     "Enter subject line template",
-    value="Paste your Subject Line (Include any placeholders if required.)",
+    placeholder="Paste your Subject Line (Include any placeholders if required.)",
+    value="",
     help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
     key="subject_input"
 )
 
 body_tpl = st.text_area(
     "Enter body template",
-    value=(
-        "Paste Your Email Body (Include any placeholders if required.)"
-    ),
+    placeholder=("Paste Your Email Body (Include any placeholders if required.)"),
+    value="",
     height=250,
     help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
     key="body_input"
