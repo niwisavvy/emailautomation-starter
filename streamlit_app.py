@@ -139,29 +139,28 @@ body_tpl = st.text_area(
     key="body_input"
 )
 
-# ---------------- Send & Reset Buttons ----------------
+# ---------------- Send & Stop Buttons ----------------
 col1, col2 = st.columns(2)
 
 with col1:
     send_clicked = st.button("🚀 Send Emails", key="send_emails_btn")
 
 with col2:
-    reset_clicked = st.button("🔄 Reset", key="reset_btn")
+    stop_clicked = st.button("🛑 Stop Sending", key="stop_sending_btn")
 
-# Handle reset
-if reset_clicked:
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
-    st.experimental_rerun()
+if stop_clicked:
+    st.session_state.stop_sending = True
 
-# Handle send
+# Initialize stop flag before sending
 if send_clicked:
-    if not from_email or not app_password:
-        st.error("Please provide your email and app password.")
-        st.stop()
-    if df is None:
-        st.error("Please upload a CSV file with recipients.")
-        st.stop()
+    st.session_state.stop_sending = False
+
+    # ... your existing validation code ...
+
+    for idx, row in df.iterrows():
+        if st.session_state.get("stop_sending", False):
+            st.warning("🛑 Email sending stopped by user.")
+            break
 
     progress = st.progress(0)
     total = len(df)
