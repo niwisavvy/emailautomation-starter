@@ -124,68 +124,33 @@ st.subheader("Compose message")
 subject_options = [
     "Special proposal for {company}",
     "Collaboration opportunity with {company}",
-    "{name} amongst The 10 Most Innovative Tech Leaders Transforming EV Industry",
+    "Exclusive offer for {name}",
     "Your personalized proposal from {sender}"
 ]
 subject_tpl = st.selectbox("Choose a subject line", subject_options, key="subject_select")
 
 body_templates = {
-   # "Proposal (standard)": (
-    #    "Hi {name},\n\n"
-     #   "Hope this email finds you well!,\n\n"
-
-        "Proposal (standard)": """Hi {name},
-    
-    Greetings from James Kent,
-    
-    I hope this message finds you well.
-    I’m reaching out on behalf of CIOLOOK, a globally recognized B2B magazine with over a decade of experience in highlighting exceptional leadership and innovation. Through our print editions, digital platforms, newsletters, and social media reach, we spotlight the journeys of C-level executives, visionaries, and trailblazers who are driving transformation across diverse industries.
-    
-    We’re pleased to extend a special invitation to be featured in our upcoming prestigious edition:
-    Most Innovative Leaders in the EV Industry 2025
-    
-    This special feature showcases your leadership and innovation in the electric vehicle industry through a compelling cover story, in-depth expert profile, and broad exposure across print, digital, and social media — celebrating your pivotal role in driving the future of clean, connected mobility.
-    
-    Benefits of the Cover Story Feature:
-    - 8-Page Power Profile – Your success story told in style, in print and digital.
-    - Cover Story – Your image on the front cover for instant credibility.
-    - Designer PDF – A reprint-ready, high-res profile you can proudly share.
-    - Digital Podcast – Let your voice and vision be heard loud and clear.
-    - Custom Digital Badge – Flaunt your feature across web, email, and socials.
-    - Open PR Section – Showcasing your stories and newsletters for lasting visibility.
-    - Post-Release Promo – Ongoing brand love through digital campaigns.
-    - Digital Certificate – Show off your recognition with a stylish certificate.
-    - Global Exposure – Your story shared across leading publishing platforms.
-    
-    Sponsorship Fee: $1,000 USD  
-    (This is an all-inclusive media package, offering premium visibility and long-term brand positioning for a fraction of traditional PR costs.)
-    
-    I would be honored to discuss how we can highlight your story to our global audience of decision-makers, investors, and industry professionals.
-    
-    Looking forward to your positive response.
-    
-    Warm regards,  
-    James Kent | Marketing Research Executive  
-    
-    📞 USA: +1 478 276 4136 | UAE: +971 504 898 410  
-    📧 james.k@ciolook.com  
-    🌍 USA | UAE | India | Kenya
-    """
-    
-    
-   # "Follow-up (gentle reminder)": (
-    #    "Hi {name},\n\n"
-     #   "I just wanted to follow up on my earlier message about {company}. "
-      #  "This opportunity is still available for {cost} {currency}, "
-       # "and I’d love to hear your thoughts.\n\n"
-        #"Best regards,\n{sender}"
-  #  ),
-   # "Short intro (very concise)": (
-    #    "Hi {name},\n\n"
-     #   "Quick note to share a proposal for {company}: {cost} {currency}. "
-      #  "Would you like to discuss?\n\n"
-       # "Cheers,\n{sender}"
-   # )
+    "Proposal (standard)": (
+        "Hi {name},\n\n"
+        "I’m reaching out with a tailored proposal for {company}. "
+        "Our solution is designed to add real value, and we can offer this at "
+        "{cost} {currency}.\n\n"
+        "Let me know if this works for you, and I’d be happy to discuss further.\n\n"
+        "Best regards,\n{sender}"
+    ),
+    "Follow-up (gentle reminder)": (
+        "Hi {name},\n\n"
+        "I just wanted to follow up on my earlier message about {company}. "
+        "This opportunity is still available for {cost} {currency}, "
+        "and I’d love to hear your thoughts.\n\n"
+        "Best regards,\n{sender}"
+    ),
+    "Short intro (very concise)": (
+        "Hi {name},\n\n"
+        "Quick note to share a proposal for {company}: {cost} {currency}. "
+        "Would you like to discuss?\n\n"
+        "Cheers,\n{sender}"
+    )
 }
 body_choice = st.selectbox("Choose a body template", list(body_templates.keys()), key="body_template_select")
 body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250, key="body_text")
@@ -237,9 +202,17 @@ if send_clicked:
         rowd.setdefault("company", "")
         rowd.setdefault("name", "")
 
-        # Use safe_format without stripping non-ASCII to allow UTF-8 characters
-        subj_text = safe_format(subject_tpl, rowd)
-        body_text = safe_format(body_tpl, rowd)
+        # Extract first name for body only
+        full_name = rowd.get("name", "")
+        first_name = full_name.split()[0] if full_name.strip() else ""
+
+        # Prepare mappings for subject and body separately
+        subject_mapping = dict(rowd)  # full name for subject
+        body_mapping = dict(rowd)
+        body_mapping["name"] = first_name  # first name for body
+
+        subj_text = safe_format(subject_tpl, subject_mapping)
+        body_text = safe_format(body_tpl, body_mapping)
 
         # Build message
         msg = MIMEMultipart()
