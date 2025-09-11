@@ -124,7 +124,7 @@ st.subheader("Compose message")
 
 subject_tpl = st.text_input(
     "Enter subject line template",
-    value="Special proposal for {company}",
+    value="Paste your Subject Line (Include any placeholders if required.)",
     help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
     key="subject_input"
 )
@@ -132,12 +132,7 @@ subject_tpl = st.text_input(
 body_tpl = st.text_area(
     "Enter body template",
     value=(
-        "Hi {name},\n\n"
-        "I’m reaching out with a tailored proposal for {company}. "
-        "Our solution is designed to add real value, and we can offer this at "
-        "{cost} {currency}.\n\n"
-        "Let me know if this works for you, and I’d be happy to discuss further.\n\n"
-        "Best regards,\n{sender}"
+        "Paste Your Email Body (Include any placeholders if required.)"
     ),
     height=250,
     help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
