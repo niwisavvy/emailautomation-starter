@@ -203,6 +203,15 @@ if send_clicked:
         subj_text = safe_format(subject_tpl, subject_mapping)
         body_text = safe_format(body_tpl, body_mapping)
 
+        # Build HTML body with Times New Roman font and preserve formatting
+        html_body = f"""\
+<html>
+  <body style="font-family: 'Times New Roman', serif;">
+    <pre style="font-family: 'Times New Roman', serif; white-space: pre-wrap;">{body_text}</pre>
+  </body>
+</html>
+"""
+
         # Build message
         msg = MIMEMultipart()
 
@@ -215,7 +224,7 @@ if send_clicked:
         msg["From"] = from_header
         msg["To"] = to_header
         msg["Subject"] = str(Header(subj_text, "utf-8"))
-        msg.attach(MIMEText(body_text, "plain", "utf-8"))
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
 
         try:
             if USE_TLS:
@@ -238,7 +247,7 @@ if send_clicked:
 
         # --- ⏳ Wait 20s before next email ---
         if idx < total - 1:
-            wait_time = 30
+            wait_time = 20
             countdown_placeholder = st.empty()
             for remaining in range(wait_time, 0, -1):
                 countdown_placeholder.info(f"⏳ Waiting {remaining} seconds before next email...")
