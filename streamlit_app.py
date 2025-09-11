@@ -239,14 +239,20 @@ if send_clicked:
 
         progress.progress((idx + 1) / total)
 
-        # --- ⏳ Wait 20s before next email ---
-        if idx < total - 1:
-            wait_time = 25
-            countdown_placeholder = st.empty()
-            for remaining in range(wait_time, 0, -1):
-                countdown_placeholder.info(f"⏳ Waiting {remaining} seconds before next email...")
-                time.sleep(1)
-            countdown_placeholder.empty()
+        # --- ⏳ Wait 28s before next email ---
+        wait_time = 28
+        countdown_placeholder = st.empty()
+        start_time = time.time()
+
+        while True:
+            elapsed = time.time() - start_time
+            remaining = int(wait_time - elapsed)
+            if remaining <= 0:
+                break
+            countdown_placeholder.info(f"⏳ Waiting {remaining} seconds before next email...")
+            time.sleep(1)
+
+        countdown_placeholder.empty()
 
     st.info(f"✅ Done — attempted {total}, sent {sent}, skipped {len(skipped_rows)}, failed {len(failed_rows)}")
 
