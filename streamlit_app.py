@@ -143,10 +143,10 @@ body_tpl = st.text_area(
 col1, col2 = st.columns(2)
 
 with col1:
-    send_clicked = st.button("🚀 Send Emails", key="send_emails_btn")
+    send_clicked = st.button("Send Emails", key="send_emails_btn")
 
 with col2:
-    stop_clicked = st.button("🛑 Stop Sending", key="stop_sending_btn")
+    stop_clicked = st.button("Stop Sending", key="stop_sending_btn")
 
 if stop_clicked:
     st.session_state.stop_sending = True
