@@ -241,7 +241,7 @@ if send_clicked:
 
         # --- ⏳ Wait 20s before next email ---
         if idx < total - 1:
-            wait_time = 30
+            wait_time = 25
             countdown_placeholder = st.empty()
             for remaining in range(wait_time, 0, -1):
                 countdown_placeholder.info(f"⏳ Waiting {remaining} seconds before next email...")
