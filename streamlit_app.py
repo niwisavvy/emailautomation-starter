@@ -14,7 +14,7 @@ from email.mime.multipart import MIMEMultipart
 st.set_page_config(page_title="Email Automation Tool")
 
 # --- SMTP Settings (Gmail by default) ---
-SMTP_SERVER = "smtp.gmail.com"
+SMTP_SERVER = "smtp.office365.com"
 SMTP_PORT = 587
 USE_TLS = True
 
