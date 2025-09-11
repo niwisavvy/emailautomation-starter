@@ -121,16 +121,17 @@ cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=10
 
 # ---------------- Compose Message ----------------
 st.subheader("Compose message")
-subject_options = [
-    "Special proposal for {company}",
-    "Collaboration opportunity with {company}",
-    "Exclusive offer for {name}",
-    "Your personalized proposal from {sender}"
-]
-subject_tpl = st.selectbox("Choose a subject line", subject_options, key="subject_select")
 
-body_templates = {
-    "Proposal (standard)": (
+subject_tpl = st.text_input(
+    "Enter subject line template",
+    value="Special proposal for {company}",
+    help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
+    key="subject_input"
+)
+
+body_tpl = st.text_area(
+    "Enter body template",
+    value=(
         "Hi {name},\n\n"
         "I’m reaching out with a tailored proposal for {company}. "
         "Our solution is designed to add real value, and we can offer this at "
@@ -138,22 +139,10 @@ body_templates = {
         "Let me know if this works for you, and I’d be happy to discuss further.\n\n"
         "Best regards,\n{sender}"
     ),
-    "Follow-up (gentle reminder)": (
-        "Hi {name},\n\n"
-        "I just wanted to follow up on my earlier message about {company}. "
-        "This opportunity is still available for {cost} {currency}, "
-        "and I’d love to hear your thoughts.\n\n"
-        "Best regards,\n{sender}"
-    ),
-    "Short intro (very concise)": (
-        "Hi {name},\n\n"
-        "Quick note to share a proposal for {company}: {cost} {currency}. "
-        "Would you like to discuss?\n\n"
-        "Cheers,\n{sender}"
-    )
-}
-body_choice = st.selectbox("Choose a body template", list(body_templates.keys()), key="body_template_select")
-body_tpl = st.text_area("Body", value=body_templates[body_choice], height=250, key="body_text")
+    height=250,
+    help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
+    key="body_input"
+)
 
 # ---------------- Send & Reset Buttons ----------------
 col1, col2 = st.columns(2)
