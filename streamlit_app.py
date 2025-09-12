@@ -215,7 +215,7 @@ if send_clicked:
   </body>
 </html>
 """
-msg.attach(MIMEText(html_body, "html", "utf-8"))
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
 
         from_display = clean_display_name(from_name or "")
         to_display = clean_display_name(rowd.get("name", "") or "")
