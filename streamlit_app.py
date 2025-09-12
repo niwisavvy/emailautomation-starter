@@ -198,24 +198,24 @@ if send_clicked:
         body_text = safe_format(body_tpl, body_mapping)
 
         # Build HTML body with Times New Roman font and preserve formatting
-        html_body = f"""\
-        <html>
-          <body style="font-family: 'Times New Roman', serif;">
-            <pre style="font-family: 'Times New Roman', serif; white-space: pre-wrap;">{body_text}</pre>
-          </body>
-        </html>
-        """
+html_body = f"""\
+<html>
+  <body style="font-family: 'Times New Roman', serif;">
+    <pre style="font-family: 'Times New Roman', serif; white-space: pre-wrap;">{body_text}</pre>
+  </body>
+</html>
+"""
 
         # Build message
         #msg = MIMEMultipart()
-        html_body = f"""
-        <html>
-          <body style="font-family: 'Times New Roman', Tahoma, Geneva, Verdana, sans-serif; font-size: 14px;">
-            {body_text}
-          </body>
-        </html>
-        """
-        msg.attach(MIMEText(html_body, "html", "utf-8"))
+html_body = f"""
+<html>
+  <body style="font-family: 'Times New Roman', Tahoma, Geneva, Verdana, sans-serif; font-size: 14px;">
+    {body_text}
+  </body>
+</html>
+"""
+msg.attach(MIMEText(html_body, "html", "utf-8"))
 
         from_display = clean_display_name(from_name or "")
         to_display = clean_display_name(rowd.get("name", "") or "")
