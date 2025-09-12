@@ -210,7 +210,7 @@ if send_clicked:
         #msg = MIMEMultipart()
         body_text = safe_format(body_tpl, rowd)
         if not body_text:
-        body_text = " "  # fallback to non-empty string
+            body_text = " "  # fallback to non-empty string
 
         html_body = f"""
 <html>
