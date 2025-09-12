@@ -121,15 +121,7 @@ subject_tpl = st.text_input(
 
 # Rich text editor for email body input using streamlit-quill
 default_html = """
-<p>Hi {name},</p>
-<p>We are excited to offer:</p>
-<ul>
-<li>✅ High quality service</li>
-<li>🚀 Fast delivery</li>
-<li>💼 Professional support</li>
-</ul>
-<p>Looking forward to hearing from you! 😊</p>
-<p>Best regards,<br>{sender}</p>
+
 """
 
 body_html = st_quill(
