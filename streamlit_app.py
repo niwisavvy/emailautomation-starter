@@ -134,7 +134,7 @@ body_tpl = st.text_area(
     "Enter body template",
     placeholder=("Paste Your Email Body (Include any placeholders if required.)"),
     value="",
-    height=250,
+    height=550,
     help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
     key="body_input"
 )
@@ -159,7 +159,7 @@ if send_clicked:
 
     for idx, row in df.iterrows():
         if st.session_state.get("stop_sending", False):
-            st.warning("🛑 Email sending stopped by user.")
+            st.warning("Email sending stopped by user.")
             break
 
     progress = st.progress(0)
@@ -199,15 +199,23 @@ if send_clicked:
 
         # Build HTML body with Times New Roman font and preserve formatting
         html_body = f"""\
-<html>
-  <body style="font-family: 'Times New Roman', serif;">
-    <pre style="font-family: 'Times New Roman', serif; white-space: pre-wrap;">{body_text}</pre>
-  </body>
-</html>
-"""
+        <html>
+          <body style="font-family: 'Times New Roman', serif;">
+            <pre style="font-family: 'Times New Roman', serif; white-space: pre-wrap;">{body_text}</pre>
+          </body>
+        </html>
+        """
 
         # Build message
-        msg = MIMEMultipart()
+        #msg = MIMEMultipart()
+        html_body = f"""
+        <html>
+          <body style="font-family: 'Times New Roman', Tahoma, Geneva, Verdana, sans-serif; font-size: 14px;">
+            {body_text}
+          </body>
+        </html>
+        """
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
 
         from_display = clean_display_name(from_name or "")
         to_display = clean_display_name(rowd.get("name", "") or "")
