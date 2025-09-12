@@ -134,7 +134,7 @@ body_tpl = st.text_area(
     "Enter body template",
     placeholder=("Paste Your Email Body (Include any placeholders if required.)"),
     value="",
-    height=550,
+    height=1050,
     help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
     key="body_input"
 )
@@ -198,7 +198,7 @@ if send_clicked:
         body_text = safe_format(body_tpl, body_mapping)
 
         # Build HTML body with Times New Roman font and preserve formatting
-html_body = f"""\
+        html_body = f"""\
 <html>
   <body style="font-family: 'Times New Roman', serif;">
     <pre style="font-family: 'Times New Roman', serif; white-space: pre-wrap;">{body_text}</pre>
@@ -208,7 +208,7 @@ html_body = f"""\
 
         # Build message
         #msg = MIMEMultipart()
-html_body = f"""
+        html_body = f"""
 <html>
   <body style="font-family: 'Times New Roman', Tahoma, Geneva, Verdana, sans-serif; font-size: 14px;">
     {body_text}
@@ -242,7 +242,7 @@ msg.attach(MIMEText(html_body, "html", "utf-8"))
             sent += 1
             st.success(f"✅ Sent to {recip_addr}")
         except Exception as e:
-            st.error(f"❌ Failed to send to {recip_addr}: {e}")
+            st.error(f"Failed to send to {recip_addr}: {e}")
             failed_rows.append({**rowd, "__reason": str(e)})
 
         progress.progress((idx + 1) / total)
