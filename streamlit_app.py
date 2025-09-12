@@ -207,19 +207,7 @@ if send_clicked:
 """
 
         # Build message
-        #msg = MIMEMultipart()
-        body_text = safe_format(body_tpl, rowd)
-        if not body_text:
-            body_text = " "  # fallback to non-empty string
-
-        html_body = f"""
-<html>
-  <body style="font-family: 'Times New Roman', Tahoma, Geneva, Verdana, sans-serif; font-size: 14px;">
-    {body_text}
-  </body>
-</html>
-"""
-            msg.attach(MIMEText(html_body, "html", "utf-8"))
+        msg = MIMEMultipart()
 
         from_display = clean_display_name(from_name or "")
         to_display = clean_display_name(rowd.get("name", "") or "")
