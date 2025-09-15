@@ -84,7 +84,7 @@ sample_df = pd.DataFrame({
 buf = io.StringIO()
 sample_df.to_csv(buf, index=False)
 st.download_button(
-    "📥 Download sample CSV",
+    "Download sample CSV",
     data=buf.getvalue(),
     file_name="sample_recipients.csv",
     mime="text/csv",
@@ -106,7 +106,7 @@ if uploaded_file:
         # Clean entire DataFrame
         df = df.applymap(clean_value)
         df.columns = [clean_value(c) for c in df.columns]
-        st.success("CSV uploaded and cleaned successfully ✅")
+        st.success("CSV uploaded and cleaned successfully")
         st.dataframe(df)
 
 # ---------------- Email Config ----------------
@@ -232,7 +232,7 @@ if send_clicked:
                     server.send_message(msg)
 
             sent += 1
-            st.success(f"✅ Sent to {recip_addr}")
+            st.success(f"Sent to {recip_addr}")
         except Exception as e:
             st.error(f"Failed to send to {recip_addr}: {e}")
             failed_rows.append({**rowd, "__reason": str(e)})
@@ -254,7 +254,7 @@ if send_clicked:
 
         countdown_placeholder.empty()
 
-    st.info(f"✅ Done — attempted {total}, sent {sent}, skipped {len(skipped_rows)}, failed {len(failed_rows)}")
+    st.info(f"Done — attempted {total}, sent {sent}, skipped {len(skipped_rows)}, failed {len(failed_rows)}")
 
     # Download skipped/failed rows if any
     if skipped_rows:
@@ -262,7 +262,7 @@ if send_clicked:
         buf_skipped = io.StringIO()
         skipped_df.to_csv(buf_skipped, index=False)
         st.download_button(
-            "📥 Download skipped rows",
+            "Download skipped rows",
             data=buf_skipped.getvalue(),
             file_name="skipped_recipients.csv",
             mime="text/csv",
@@ -273,7 +273,7 @@ if send_clicked:
         buf_failed = io.StringIO()
         failed_df.to_csv(buf_failed, index=False)
         st.download_button(
-            "📥 Download failed rows",
+            "Download failed rows",
             data=buf_failed.getvalue(),
             file_name="failed_recipients.csv",
             mime="text/csv",
