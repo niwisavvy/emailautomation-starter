@@ -163,9 +163,9 @@ if send_clicked:
         if st.session_state.get("stop_sending", False):
             st.warning("Email sending stopped by user.")
             break
-st.session_state.sending = True
-st.session_state.stop_sending = False
-st.session_state.sent_count = 0
+    st.session_state.sending = True
+    st.session_state.stop_sending = False
+    st.session_state.sent_count = 0
     progress = st.progress(0)
     total = len(df)
     sent = 0
