@@ -160,7 +160,7 @@ with col1:
     send_clicked = st.button("Send Emails", key="send_emails_btn", disabled=st.session_state.sending)
 
 with col2:
-    stop_clicked = st.button("Stop Sending", key="stop_sending_btn", disabled=st.session_state.sending)
+    stop_clicked = st.button("Stop Sending", key="stop_sending_btn", disabled=not st.session_state.sending)
 
 if stop_clicked:
     st.session_state.stop_sending = True
@@ -299,4 +299,5 @@ if send_clicked and not st.session_state.sending:
             mime="text/csv",
             key="download_failed"
         )
-    st.experimental_rerun()  # Refresh UI to re-enable inputs/buttons
+st.session_state.sending = False
+
