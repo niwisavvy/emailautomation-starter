@@ -194,8 +194,8 @@ if send_clicked:
 
         # Defaults
         rowd.setdefault("sender", from_name)
-        rowd.setdefault("cost", str(cost))
-        rowd.setdefault("currency", currency)
+        #rowd.setdefault("cost", str(cost))
+        #rowd.setdefault("currency", currency)
         rowd.setdefault("company", "")
         rowd.setdefault("name", "")
 
