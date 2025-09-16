@@ -167,7 +167,7 @@ if stop_clicked:
 
 # Initialize stop flag before sending
 if send_clicked and not st.session_state.sending:
-    send_emails()
+    st.session_state.stop_sending = False
 
     # ... your existing validation code ...
 
