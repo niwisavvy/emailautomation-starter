@@ -269,6 +269,9 @@ if send_clicked:
         countdown_placeholder.empty()
 
     st.info(f"Done — attempted {total}, sent {sent}, skipped {len(skipped_rows)}, failed {len(failed_rows)}")
+    
+    # Show total sent count separately
+    st.markdown(f"### Total Emails Sent: {sent}")
 
     # Download skipped/failed rows if any
     if skipped_rows:
