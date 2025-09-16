@@ -123,9 +123,9 @@ st.subheader("Email configuration")
 disable_inputs = st.session_state.sending
 
 
-from_email = clean_invisible_unicode(st.text_input("Your email address", key="from_email", disabled=disable_inputs))
-app_password = clean_invisible_unicode(st.text_input("App password", type="password", key="app_password", disabled=disable_inputs))
-from_name = st.text_input("Your name (optional)", key="from_name", disabled=disable_inputs)
+from_email = clean_invisible_unicode(st.text_input("Your email address", key="from_email", disabled=st.session_state.sending))
+app_password = clean_invisible_unicode(st.text_input("App password", type="password", key="app_password", disabled=st.session_state.sending))
+from_name = st.text_input("Your name (optional)", key="from_name", disabled=st.session_state.sending)
 
 #st.subheader("Cost Associated")
 #currency = st.selectbox("Currency", ["USD", "AED"], key="currency_select")
@@ -140,7 +140,7 @@ subject_tpl = st.text_input(
     value="",
     help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
     key="subject_input",
-    disabled=disable_inputs
+    disabled=st.session_state.sending
 )
 
 body_tpl = st.text_area(
@@ -150,7 +150,7 @@ body_tpl = st.text_area(
     height=850,
     help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
     key="body_input",
-    disabled=disable_inputs
+    disabled=st.session_state.sending
 )
 
 # ---------------- Send & Stop Buttons ----------------
@@ -166,8 +166,8 @@ if stop_clicked:
     st.session_state.stop_sending = True
 
 # Initialize stop flag before sending
-if send_clicked:
-    st.session_state.stop_sending = False
+if send_clicked and not st.session_state.sending:
+    send_emails()
 
     # ... your existing validation code ...
 
@@ -178,10 +178,10 @@ if send_clicked:
     #st.session_state.sending = True
     #st.session_state.stop_sending = False
     #st.session_state.sent_count = 0
-    #def send_emails():
-    st.session_state.sent_count = 0
-    st.session_state.stop_sending = False
-    st.session_state.sending = True
+    def send_emails():
+        st.session_state.sent_count = 0
+        st.session_state.stop_sending = False
+        st.session_state.sending = True
     
     progress = st.progress(0)
     total = len(df)
