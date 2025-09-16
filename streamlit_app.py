@@ -178,10 +178,10 @@ if send_clicked and not st.session_state.sending:
     #st.session_state.sending = True
     #st.session_state.stop_sending = False
     #st.session_state.sent_count = 0
-    def send_emails():
-        st.session_state.sent_count = 0
-        st.session_state.stop_sending = False
-        st.session_state.sending = True
+def send_emails():
+    st.session_state.sent_count = 0
+    st.session_state.stop_sending = False
+    st.session_state.sending = True
     
     progress = st.progress(0)
     total = len(df)
