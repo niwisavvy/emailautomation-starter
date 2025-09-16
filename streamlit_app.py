@@ -125,7 +125,7 @@ subject_tpl = st.text_input(
 body_tpl = st.text_area(
     "Enter body template",
     placeholder="Enter your email body (you can use placeholders like {name}, {company}, {sender})",
-    height=250,
+    height=1250,
     value="",
     disabled=st.session_state.is_sending
 )
@@ -236,7 +236,7 @@ if st.session_state.is_sending:
 
         # --- ⏳ Wait 20s before next email ---
         if idx < total - 1:
-            wait_time = 20
+            wait_time = 22
             countdown_placeholder = st.empty()
             for remaining in range(wait_time, 0, -1):
                 countdown_placeholder.info(f"⏳ Waiting {remaining} seconds before next email...")
