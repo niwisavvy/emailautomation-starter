@@ -121,6 +121,8 @@ if "sent_count" not in st.session_state:
 # ---------------- Email Config ----------------
 st.subheader("Email configuration")
 disable_inputs = st.session_state.sending
+
+
 from_email = clean_invisible_unicode(st.text_input("Your email address", key="from_email", disabled=disable_inputs))
 app_password = clean_invisible_unicode(st.text_input("App password", type="password", key="app_password", disabled=disable_inputs))
 from_name = st.text_input("Your name (optional)", key="from_name", disabled=disable_inputs)
@@ -173,9 +175,14 @@ if send_clicked:
         if st.session_state.get("stop_sending", False):
             st.warning("Email sending stopped by user.")
             break
-    st.session_state.sending = True
-    st.session_state.stop_sending = False
+    #st.session_state.sending = True
+    #st.session_state.stop_sending = False
+    #st.session_state.sent_count = 0
+    #def send_emails():
     st.session_state.sent_count = 0
+    st.session_state.stop_sending = False
+    st.session_state.sending = True
+    
     progress = st.progress(0)
     total = len(df)
     sent = 0
@@ -296,3 +303,4 @@ if send_clicked:
             mime="text/csv",
             key="download_failed"
         )
+    st.experimental_rerun()  # Refresh UI to re-enable inputs/buttons
