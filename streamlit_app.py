@@ -112,8 +112,8 @@ if uploaded_file:
 # ---------------- Email Config ----------------
 st.subheader("Email configuration")
 from_email = clean_invisible_unicode(st.text_input("Your email address", key="from_email"))
-app_password = clean_invisible_unicode(st.text_input("App password", type="password", key="app_password", disabled=disable_inputs))
-from_name = st.text_input("Your name (optional)", key="from_name", disabled=disable_inputs)
+app_password = clean_invisible_unicode(st.text_input("App password", type="password", key="app_password"))
+from_name = st.text_input("Your name (optional)", key="from_name")
 
 #st.subheader("Cost Associated")
 #currency = st.selectbox("Currency", ["USD", "AED"], key="currency_select")
