@@ -109,11 +109,21 @@ if uploaded_file:
         st.success("CSV uploaded and cleaned successfully")
         st.dataframe(df)
 
+# Initialize session state variables for controlling UI
+if "sending" not in st.session_state:
+    st.session_state.sending = False
+if "stop_sending" not in st.session_state:
+    st.session_state.stop_sending = False
+if "sent_count" not in st.session_state:
+    st.session_state.sent_count = 0
+
+
 # ---------------- Email Config ----------------
 st.subheader("Email configuration")
-from_email = clean_invisible_unicode(st.text_input("Your email address", key="from_email"))
-app_password = clean_invisible_unicode(st.text_input("App password", type="password", key="app_password"))
-from_name = st.text_input("Your name (optional)", key="from_name")
+disable_inputs = st.session_state.sending
+from_email = clean_invisible_unicode(st.text_input("Your email address", key="from_email", disabled=disable_inputs))
+app_password = clean_invisible_unicode(st.text_input("App password", type="password", key="app_password", disabled=disable_inputs))
+from_name = st.text_input("Your name (optional)", key="from_name", disabled=disable_inputs)
 
 #st.subheader("Cost Associated")
 #currency = st.selectbox("Currency", ["USD", "AED"], key="currency_select")
