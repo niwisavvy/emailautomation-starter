@@ -104,7 +104,6 @@ if uploaded_file:
 # ---------------- Email Config ----------------
 st.subheader("Email configuration")
 
-# Disable inputs while sending
 from_email = st.text_input(
     "Your email address", key="from_email", disabled=st.session_state.is_sending
 )
