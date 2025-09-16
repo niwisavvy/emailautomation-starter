@@ -115,44 +115,18 @@ from_name = st.text_input(
 )
 
 # ---------------- Compose Message ----------------
-subject_options = [
-    "Special proposal for {company}",
-    "Collaboration opportunity with {company}",
-    "Exclusive offer for {name}",
-    "Your personalized proposal from {sender}"
-]
-subject_tpl = st.selectbox(
-    "Choose a subject line", subject_options, key="subject_select", disabled=st.session_state.is_sending
-)
-
-body_templates = {
-    "Proposal (standard)": (
-        "Hi {name},\n\n"
-        "I’m reaching out with a tailored proposal for {company}. "
-        "Our solution is designed to add real value.\n\n"
-        "Let me know if this works for you, and I’d be happy to discuss further.\n\n"
-        "Best regards,\n{sender}"
-    ),
-    "Follow-up (gentle reminder)": (
-        "Hi {name},\n\n"
-        "I just wanted to follow up on my earlier message about {company}. "
-        "This opportunity is still available, "
-        "and I’d love to hear your thoughts.\n\n"
-        "Best regards,\n{sender}"
-    ),
-    "Short intro (very concise)": (
-        "Hi {name},\n\n"
-        "Quick note to share a proposal for {company}. "
-        "Would you like to discuss?\n\n"
-        "Cheers,\n{sender}"
-    )
-}
-body_choice = st.selectbox(
-    "Choose a body template", list(body_templates.keys()), key="body_template_select",
+subject_tpl = st.text_input(
+    "Enter subject line template",
+    placeholder="Enter your subject line (you can use placeholders like {name}, {company}, {sender})",
+    value="",
     disabled=st.session_state.is_sending
 )
+
 body_tpl = st.text_area(
-    "Body", value=body_templates[body_choice], height=250, key="body_text",
+    "Enter body template",
+    placeholder="Enter your email body (you can use placeholders like {name}, {company}, {sender})",
+    height=250,
+    value="",
     disabled=st.session_state.is_sending
 )
 
@@ -185,6 +159,15 @@ if st.session_state.is_sending:
         st.stop()
     if df is None:
         st.error("Please upload a CSV file with recipients.")
+        st.session_state.is_sending = False
+        st.stop()
+
+    if not subject_tpl.strip():
+        st.error("Subject line template cannot be empty.")
+        st.session_state.is_sending = False
+        st.stop()
+    if not body_tpl.strip():
+        st.error("Body template cannot be empty.")
         st.session_state.is_sending = False
         st.stop()
 
