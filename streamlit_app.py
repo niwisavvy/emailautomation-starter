@@ -127,7 +127,7 @@ subject_tpl = st.text_input(
     placeholder="Paste your Subject Line (Include any placeholders if required.)",
     value="",
     help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
-    key="subject_input"
+    key="subject_input",
     disabled=disable_inputs
 )
 
@@ -137,7 +137,7 @@ body_tpl = st.text_area(
     value="",
     height=850,
     help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
-    key="body_input"
+    key="body_input",
     disabled=disable_inputs
 )
 
