@@ -111,13 +111,13 @@ if uploaded_file:
 
 # ---------------- Email Config ----------------
 st.subheader("Email configuration")
-from_email = clean_invisible_unicode(st.text_input("Your email address", key="from_email"))
-app_password = clean_invisible_unicode(st.text_input("App password", type="password", key="app_password"))
-from_name = st.text_input("Your name (optional)", key="from_name")
+from_email = clean_invisible_unicode(st.text_input("Your email address", key="from_email", disabled=disable_inputs))
+app_password = clean_invisible_unicode(st.text_input("App password", type="password", key="app_password", disabled=disable_inputs))
+from_name = st.text_input("Your name (optional)", key="from_name", disabled=disable_inputs)
 
-st.subheader("Cost Associated")
-currency = st.selectbox("Currency", ["USD", "AED"], key="currency_select")
-cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=1000.0, key="cost_input")
+#st.subheader("Cost Associated")
+#currency = st.selectbox("Currency", ["USD", "AED"], key="currency_select")
+#cost = st.number_input(f"Cost in {currency}", min_value=0.0, step=50.0, value=1000.0, key="cost_input")
 
 # ---------------- Compose Message ----------------
 st.subheader("Compose message")
@@ -128,6 +128,7 @@ subject_tpl = st.text_input(
     value="",
     help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
     key="subject_input"
+    disabled=disable_inputs
 )
 
 body_tpl = st.text_area(
@@ -137,16 +138,17 @@ body_tpl = st.text_area(
     height=850,
     help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
     key="body_input"
+    disabled=disable_inputs
 )
 
 # ---------------- Send & Stop Buttons ----------------
 col1, col2 = st.columns(2)
 
 with col1:
-    send_clicked = st.button("Send Emails", key="send_emails_btn")
+    send_clicked = st.button("Send Emails", key="send_emails_btn", disabled=st.session_state.sending)
 
 with col2:
-    stop_clicked = st.button("Stop Sending", key="stop_sending_btn")
+    stop_clicked = st.button("Stop Sending", key="stop_sending_btn", disabled=not st.session_state.sending)
 
 if stop_clicked:
     st.session_state.stop_sending = True
@@ -161,7 +163,9 @@ if send_clicked:
         if st.session_state.get("stop_sending", False):
             st.warning("Email sending stopped by user.")
             break
-
+st.session_state.sending = True
+st.session_state.stop_sending = False
+st.session_state.sent_count = 0
     progress = st.progress(0)
     total = len(df)
     sent = 0
@@ -240,7 +244,7 @@ if send_clicked:
         progress.progress((idx + 1) / total)
 
         # --- ⏳ Wait 28s before next email ---
-        wait_time = 28
+        wait_time = 22
         countdown_placeholder = st.empty()
         start_time = time.time()
 
