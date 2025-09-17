@@ -239,6 +239,10 @@ if send_clicked:
         msg["From"] = from_header
         msg["To"] = to_header
         msg["Subject"] = str(Header(subj_text, "utf-8"))
+        # Request read receipts (client-dependent; often ignored)
+        msg["Disposition-Notification-To"] = from_email
+        msg["Return-Receipt-To"] = from_email
+        msg["X-Confirm-Reading-To"] = from_email
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
         try:
