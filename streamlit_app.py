@@ -11,7 +11,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-st.set_page_config(page_title="Email Automation Tool")
+st.set_page_config(page_title="Team Niwrutti")
 
 # --- SMTP Settings (Gmail by default) ---
 SMTP_SERVER = "smtp.gmail.com"
@@ -71,7 +71,7 @@ def clean_invisible_unicode(s: str) -> str:
     return s.replace('\xa0', '').replace('\u200b', '').strip()
 
 # ---------------- Upload & Sample CSV ----------------
-st.title("Email Automation Tool")
+st.title("Team Niwrutti")
 st.subheader("Upload recipient list")
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"], key="csv_uploader")
 
@@ -106,7 +106,7 @@ if uploaded_file:
         # Clean entire DataFrame
         df = df.applymap(clean_value)
         df.columns = [clean_value(c) for c in df.columns]
-        st.success("CSV uploaded and cleaned successfully")
+        st.success("CSV cleaned and uploaded successfully")
         st.dataframe(df)
 
 # Initialize session state variables for controlling UI
@@ -120,12 +120,9 @@ if "sent_count" not in st.session_state:
 
 # ---------------- Email Config ----------------
 st.subheader("Email configuration")
-disable_inputs = st.session_state.sending
-
-
-from_email = clean_invisible_unicode(st.text_input("Your email address", key="from_email", disabled=st.session_state.sending))
-app_password = clean_invisible_unicode(st.text_input("App password", type="password", key="app_password", disabled=st.session_state.sending))
-from_name = st.text_input("Your name (optional)", key="from_name", disabled=st.session_state.sending)
+from_email = clean_invisible_unicode(st.text_input("Your email address", key="from_email"))
+app_password = clean_invisible_unicode(st.text_input("App password", type="password", key="app_password"))
+from_name = st.text_input("Your name (optional)", key="from_name")
 
 #st.subheader("Cost Associated")
 #currency = st.selectbox("Currency", ["USD", "AED"], key="currency_select")
@@ -139,8 +136,7 @@ subject_tpl = st.text_input(
     placeholder="Paste your Subject Line (Include any placeholders if required.)",
     value="",
     help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
-    key="subject_input",
-    disabled=st.session_state.sending
+    key="subject_input"
 )
 
 body_tpl = st.text_area(
@@ -149,25 +145,24 @@ body_tpl = st.text_area(
     value="",
     height=850,
     help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
-    key="body_input",
-    disabled=st.session_state.sending
+    key="body_input"
 )
 
 # ---------------- Send & Stop Buttons ----------------
 col1, col2 = st.columns(2)
 
 with col1:
-    send_clicked = st.button("Send Emails", key="send_emails_btn", disabled=st.session_state.sending)
+    send_clicked = st.button("Send Emails", key="send_emails_btn")
 
 with col2:
-    stop_clicked = st.button("Stop Sending", key="stop_sending_btn", disabled=not st.session_state.sending)
+    stop_clicked = st.button("Stop Sending", key="stop_sending_btn")
 
 if stop_clicked:
     st.session_state.stop_sending = True
 
 # Initialize stop flag before sending
-if send_clicked and not st.session_state.sending:
-    st.session_state.stop_sending = True
+if send_clicked:
+    st.session_state.stop_sending = False
 
     # ... your existing validation code ...
 
@@ -197,8 +192,6 @@ if send_clicked and not st.session_state.sending:
 
         # Defaults
         rowd.setdefault("sender", from_name)
-        #rowd.setdefault("cost", str(cost))
-        #rowd.setdefault("currency", currency)
         rowd.setdefault("company", "")
         rowd.setdefault("name", "")
 
