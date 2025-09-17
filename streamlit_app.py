@@ -253,16 +253,16 @@ if send_clicked:
                     server.send_message(msg)
             
         # increment local and session counters
-        sent += 1
-        st.session_state.sent_count += 1
+            sent += 1
+            st.session_state.sent_count += 1
 
         # update live metric (falls back to a simple write if placeholder is missing)
-        try:
-            sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
-        except Exception:
-            st.write(f"Emails sent: {st.session_state.sent_count}")
+            try:
+                sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
+            except Exception:
+                st.write(f"Emails sent: {st.session_state.sent_count}")
 
-        st.success(f"✅ Sent to {recip_addr}")
+            st.success(f"✅ Sent to {recip_addr}")
         except Exception as e:
             st.error(f"Failed to send to {recip_addr}: {e}")
             failed_rows.append({**rowd, "__reason": str(e)})
