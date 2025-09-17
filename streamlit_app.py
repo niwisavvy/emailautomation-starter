@@ -117,6 +117,9 @@ if "stop_sending" not in st.session_state:
 if "sent_count" not in st.session_state:
     st.session_state.sent_count = 0
 
+# initialize live sent counter
+if "sent_count" not in st.session_state:
+    st.session_state.sent_count = 0
 
 # ---------------- Email Config ----------------
 st.subheader("Email configuration")
@@ -148,6 +151,13 @@ body_tpl = st.text_area(
     key="body_input"
 )
 
+# live counter placeholder (shows 0 initially)
+sent_count_placeholder = st.empty()
+sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
+
+progress = st.progress(0)
+
+
 # ---------------- Send & Stop Buttons ----------------
 col1, col2 = st.columns(2)
 
@@ -163,6 +173,7 @@ if stop_clicked:
 # Initialize stop flag before sending
 if send_clicked:
     st.session_state.stop_sending = False
+    st.session_state.sent_count = 0
 
     # ... your existing validation code ...
 
@@ -240,9 +251,18 @@ if send_clicked:
                 with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
                     server.login(from_email, app_password)
                     server.send_message(msg)
+            
+        # increment local and session counters
+        sent += 1
+        st.session_state.sent_count += 1
 
-            sent += 1
-            st.success(f"Sent to {recip_addr}")
+        # update live metric (falls back to a simple write if placeholder is missing)
+        try:
+            sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
+        except Exception:
+            st.write(f"Emails sent: {st.session_state.sent_count}")
+
+        st.success(f"✅ Sent to {recip_addr}")
         except Exception as e:
             st.error(f"Failed to send to {recip_addr}: {e}")
             failed_rows.append({**rowd, "__reason": str(e)})
@@ -267,7 +287,8 @@ if send_clicked:
     st.info(f"Done — attempted {total}, sent {sent}, skipped {len(skipped_rows)}, failed {len(failed_rows)}")
     
     # Show total sent count separately
-    st.markdown(f"### Total Emails Sent: {sent}")
+    #st.markdown(f"### Total Emails Sent: {sent}")
+    st.markdown(f"**Total emails successfully sent:** {st.session_state.sent_count}")
 
     # Download skipped/failed rows if any
     if skipped_rows:
@@ -292,5 +313,6 @@ if send_clicked:
             mime="text/csv",
             key="download_failed"
         )
+        
 st.session_state.sending = False
 
