@@ -117,15 +117,7 @@ if "stop_sending" not in st.session_state:
 if "sent_count" not in st.session_state:
     st.session_state.sent_count = 0
 
-# live counter placeholder (shows 0 initially)
-counter_col1, counter_col2 = st.columns(2)
 
-with counter_col1:
-    sent_count_placeholder = st.empty()
-    sent_count_placeholder.metric("How Many Emails sent", st.session_state.sent_count)
-
-with counter_col2:
-    cooling_timer_placeholder = st.empty()
 
 # ---------------- Email Config ----------------
 st.subheader("Email configuration")
@@ -266,12 +258,18 @@ if send_clicked:
             sent += 1
             st.session_state.sent_count += 1
 
-        # update live metric (falls back to a simple write if placeholder is missing)
-            try:
-                sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
-            except Exception:
-                st.write(f"Emails sent: {st.session_state.sent_count}")
-
+            # live counter placeholder (shows 0 initially)
+            counter_col1, counter_col2 = st.columns(2)
+            
+            with counter_col1:
+                try:
+                    sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
+                except Exception:
+                    st.write(f"Emails sent: {st.session_state.sent_count}")
+            
+            with counter_col2:
+                cooling_timer_placeholder = st.empty()
+       
             st.success(f"✅ Sent to {recip_addr}")
      
  # -------- 🧊 Cooling period after every 5 emails --------
