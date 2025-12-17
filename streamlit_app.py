@@ -132,21 +132,34 @@ from_name = st.text_input("Your name (optional)", key="from_name")
 # ---------------- Compose Message ----------------
 st.subheader("Compose message")
 
-subject_tpl = st.text_input(
-    "Enter subject line template",
-    placeholder="Paste your Subject Line (Include any placeholders if required.)",
+subject_tpl_1 = st.text_input(
+    "Enter Subject Line Template 1",
+    placeholder="Subject Line – Version 1",
     value="",
-    help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
-    key="subject_input"
+    key="subject_input_1"
 )
 
-body_tpl = st.text_area(
-    "Enter body template",
-    placeholder=("Paste Your Email Body (Include any placeholders if required.)"),
+subject_tpl_2 = st.text_input(
+    "Enter Subject Line Template 2",
+    placeholder="Subject Line – Version 2",
     value="",
-    height=850,
-    help="Use placeholders like {name}, {company}, {sender}, {cost}, {currency}",
-    key="body_input"
+    key="subject_input_2"
+)
+
+body_tpl_1 = st.text_area(
+    "Enter Email Body Template 1",
+    placeholder="Email Body – Version 1",
+    value="",
+    height=400,
+    key="body_input_1"
+)
+
+body_tpl_2 = st.text_area(
+    "Enter Email Body Template 2",
+    placeholder="Email Body – Version 2",
+    value="",
+    height=400,
+    key="body_input_2"
 )
 
 # live counter placeholder (shows 0 initially)
@@ -213,9 +226,17 @@ if send_clicked:
         body_mapping = dict(rowd)
         body_mapping["name"] = first_name  # first name for body
 
-        subj_text = safe_format(subject_tpl, subject_mapping)
-        body_text = safe_format(body_tpl, body_mapping)
+        #subj_text = safe_format(subject_tpl, subject_mapping)
+        #body_text = safe_format(body_tpl, body_mapping)
 
+        # 🔁 Alternate subject & body after every email
+        if sent % 2 == 0:
+            subj_text = safe_format(subject_tpl_1, subject_mapping)
+            body_text = safe_format(body_tpl_1, body_mapping)
+        else:
+            subj_text = safe_format(subject_tpl_2, subject_mapping)
+            body_text = safe_format(body_tpl_2, body_mapping)
+        
         # Build HTML body with Times New Roman font and preserve formatting
         html_body = f"""\
 <html>
