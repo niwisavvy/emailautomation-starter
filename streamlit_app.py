@@ -122,7 +122,7 @@ counter_col1, counter_col2 = st.columns(2)
 
 with counter_col1:
     sent_count_placeholder = st.empty()
-    sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
+    sent_count_placeholder.metric("How Many Emails sent", st.session_state.sent_count)
 
 with counter_col2:
     cooling_timer_placeholder = st.empty()
@@ -159,7 +159,7 @@ body_tpl = st.text_area(
 
 # live counter placeholder (shows 0 initially)
 sent_count_placeholder = st.empty()
-sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
+sent_count_placeholder.metric("", st.session_state.sent_count)
 
 progress = st.progress(0)
 
