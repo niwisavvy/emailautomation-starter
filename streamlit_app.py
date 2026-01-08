@@ -170,13 +170,34 @@ progress = st.progress(0)
 
 
 # ---------------- Send & Stop Buttons ----------------
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     send_clicked = st.button("Send Emails", key="send_emails_btn")
 
 with col2:
     stop_clicked = st.button("Stop Sending", key="stop_sending_btn")
+
+with col3:
+     -------- 🧊 Cooling period after every 5 emails --------
+    if st.session_state.sent_count % 5 == 0:
+        cooling_time = 120  # 2 minutes
+        start_cool = time.time()
+
+        while True:
+            elapsed = time.time() - start_cool
+            remaining = int(cooling_time - elapsed)
+
+            if remaining <= 0:
+                break
+
+            mins, secs = divmod(remaining, 60)
+            cooling_timer_placeholder.info(
+                f"🧊 Cooling period: {mins:02d}:{secs:02d} remaining"
+            )
+            time.sleep(1)
+
+        cooling_timer_placeholder.empty()
 
 if stop_clicked:
     st.session_state.stop_sending = True
