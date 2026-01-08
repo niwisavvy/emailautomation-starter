@@ -179,26 +179,7 @@ with col2:
     stop_clicked = st.button("Stop Sending", key="stop_sending_btn")
 
 with col3:
-        cooling_timer_placeholder = st.empty()
-     #-------- 🧊 Cooling period after every 5 emails --------
-    if st.session_state.sent_count % 5 == 0:
-        cooling_time = 120  # 2 minutes
-        start_cool = time.time()
-
-        while True:
-            elapsed = time.time() - start_cool
-            remaining = int(cooling_time - elapsed)
-
-            if remaining <= 0:
-                break
-
-            mins, secs = divmod(remaining, 60)
-            cooling_timer_placeholder.info(
-                f"🧊 Cooling period: {mins:02d}:{secs:02d} remaining"
-            )
-            time.sleep(1)
-
-        cooling_timer_placeholder.empty()
+    cooling_timer_placeholder = st.empty()
 
 if stop_clicked:
     st.session_state.stop_sending = True
@@ -302,7 +283,7 @@ if send_clicked:
             st.session_state.sent_count += 1
 
             # live counter placeholder (shows 0 initially)
-            counter_col1, counter_col2 = st.columns(2)
+            counter_col1 = st.columns(1)
             
             with counter_col1:
                 try:
@@ -310,29 +291,29 @@ if send_clicked:
                 except Exception:
                     st.write(f"Emails sent: {st.session_state.sent_count}")
             
-            with counter_col2:
-                cooling_timer_placeholder = st.empty()
+      #      with counter_col2:
+      #          cooling_timer_placeholder = st.empty()
        
      
- # ------- 🧊 Cooling period after every 5 emails --------
-#          if st.session_state.sent_count % 5 == 0:
- #               cooling_time = 120  # 2 minutes
-  #              start_cool = time.time()
-#
- #               while True:
-  #                  elapsed = time.time() - start_cool
-   #                 remaining = int(cooling_time - elapsed)
-#
- #                   if remaining <= 0:
-  #                      break
+  ------- 🧊 Cooling period after every 5 emails --------
+          if st.session_state.sent_count % 5 == 0:
+                cooling_time = 120  # 2 minutes
+                start_cool = time.time()
 
-   #                 mins, secs = divmod(remaining, 60)
-    #                cooling_timer_placeholder.info(
-     #                   f"🧊 Cooling period: {mins:02d}:{secs:02d} remaining"
-      #              )
-       #             time.sleep(1)
+                while True:
+                    elapsed = time.time() - start_cool
+                    remaining = int(cooling_time - elapsed)
 
-        #        cooling_timer_placeholder.empty() 
+                    if remaining <= 0:
+                        break
+
+                    mins, secs = divmod(remaining, 60)
+                    cooling_timer_placeholder.info(
+                        f"🧊 Cooling period: {mins:02d}:{secs:02d} remaining"
+                    )
+                    time.sleep(1)
+
+                cooling_timer_placeholder.empty() 
 
             st.success(f"✅ Sent to {recip_addr}")
         
