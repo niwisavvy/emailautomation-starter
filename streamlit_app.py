@@ -295,7 +295,7 @@ if send_clicked:
       #          cooling_timer_placeholder = st.empty()
        
      
-  ------- 🧊 Cooling period after every 5 emails --------
+ # ------- 🧊 Cooling period after every 5 emails --------
           if st.session_state.sent_count % 5 == 0:
                 cooling_time = 120  # 2 minutes
                 start_cool = time.time()
