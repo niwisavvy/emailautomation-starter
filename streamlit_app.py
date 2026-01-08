@@ -277,11 +277,11 @@ if send_clicked:
         from_header = formataddr((str(Header(from_display, "utf-8")), from_email))
         to_header = formataddr((str(Header(to_display, "utf-8")), recip_addr))
         cc_list = []
-       #if cc_emails_raw:
-        #        for e in cc_emails_raw.split(","):
-         #           cleaned = clean_email_address(e)
-          #          if cleaned:
-           #             cc_list.append(cleaned)
+        if cc_emails_raw:
+                for e in cc_emails_raw.split(","):
+                    cleaned = clean_email_address(e)
+                    if cleaned:
+                        cc_list.append(cleaned)
 
         msg["From"] = from_header
         msg["To"] = to_header
@@ -296,6 +296,8 @@ if send_clicked:
 
         try:
             if USE_TLS:
+                st.write(type(smtplib.SMTP))
+                st.write(type(SMTP_SERVER))
                 with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
                     server.starttls()
                     server.login(from_email, app_password)
