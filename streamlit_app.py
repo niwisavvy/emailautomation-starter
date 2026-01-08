@@ -18,8 +18,6 @@ SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 USE_TLS = True
 
-streamlit run streamlit_app.py --server.runOnSave false
-
 # ---------------- Helpers ----------------
 def clean_value(val):
     """Clean individual cell values (remove invisible characters)."""
@@ -280,9 +278,9 @@ if send_clicked:
         to_header = formataddr((str(Header(to_display, "utf-8")), recip_addr))
         cc_list = []
         if cc_emails_raw:
-                for e in cc_emails_raw.split(","):
-                    cleaned = clean_email_address(e)
-                    if cleaned:
+               # for e in cc_emails_raw.split(","):
+                #    cleaned = clean_email_address(e)
+                #    if cleaned:
                         cc_list.append(cleaned)
 
         msg["From"] = from_header
