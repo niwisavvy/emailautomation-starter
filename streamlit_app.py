@@ -179,7 +179,7 @@ with col2:
     stop_clicked = st.button("Stop Sending", key="stop_sending_btn")
 
 with col3:
-     -------- 🧊 Cooling period after every 5 emails --------
+     #-------- 🧊 Cooling period after every 5 emails --------
     if st.session_state.sent_count % 5 == 0:
         cooling_time = 120  # 2 minutes
         start_cool = time.time()
