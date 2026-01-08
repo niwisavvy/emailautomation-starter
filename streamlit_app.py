@@ -18,6 +18,8 @@ SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 USE_TLS = True
 
+streamlit run streamlit_app.py --server.runOnSave false
+
 # ---------------- Helpers ----------------
 def clean_value(val):
     """Clean individual cell values (remove invisible characters)."""
@@ -296,8 +298,6 @@ if send_clicked:
 
         try:
             if USE_TLS:
-                st.write(type(smtplib.SMTP))
-                st.write(type(SMTP_SERVER))
                 with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
                     server.starttls()
                     server.login(from_email, app_password)
