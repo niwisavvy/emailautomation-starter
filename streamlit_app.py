@@ -117,7 +117,20 @@ if "stop_sending" not in st.session_state:
 if "sent_count" not in st.session_state:
     st.session_state.sent_count = 0
 
+# ---------------- Send & Stop Buttons ----------------
+col1, col2, col3 = st.columns(3)
 
+with col1:
+    send_clicked = st.button("Send Emails", key="send_emails_btn")
+
+with col2:
+    stop_clicked = st.button("Stop Sending", key="stop_sending_btn")
+
+with col3:
+    cooling_timer_placeholder = st.empty()
+
+if stop_clicked:
+    st.session_state.stop_sending = True
 
 # ---------------- Email Config ----------------
 st.subheader("Email configuration")
@@ -170,16 +183,16 @@ progress = st.progress(0)
 
 
 # ---------------- Send & Stop Buttons ----------------
-col1, col2, col3 = st.columns(3)
+#col1, col2, col3 = st.columns(3)
 
-with col1:
-    send_clicked = st.button("Send Emails", key="send_emails_btn")
+#with col1:
+#    send_clicked = st.button("Send Emails", key="send_emails_btn")
 
-with col2:
-    stop_clicked = st.button("Stop Sending", key="stop_sending_btn")
+#with col2:
+#    stop_clicked = st.button("Stop Sending", key="stop_sending_btn")
 
-with col3:
-    cooling_timer_placeholder = st.empty()
+#with col3:
+#    cooling_timer_placeholder = st.empty()
 
 if stop_clicked:
     st.session_state.stop_sending = True
