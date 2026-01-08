@@ -296,24 +296,24 @@ if send_clicked:
        
      
  # ------- 🧊 Cooling period after every 5 emails --------
-          if st.session_state.sent_count % 5 == 0:
-                cooling_time = 120  # 2 minutes
-                start_cool = time.time()
-
-                while True:
-                    elapsed = time.time() - start_cool
-                    remaining = int(cooling_time - elapsed)
-
-                    if remaining <= 0:
-                        break
-
-                    mins, secs = divmod(remaining, 60)
-                    cooling_timer_placeholder.info(
-                        f"🧊 Cooling period: {mins:02d}:{secs:02d} remaining"
-                    )
-                    time.sleep(1)
-
-                cooling_timer_placeholder.empty() 
+              if st.session_state.sent_count % 5 == 0:
+                    cooling_time = 120  # 2 minutes
+                    start_cool = time.time()
+    
+                    while True:
+                        elapsed = time.time() - start_cool
+                        remaining = int(cooling_time - elapsed)
+    
+                        if remaining <= 0:
+                            break
+    
+                        mins, secs = divmod(remaining, 60)
+                        cooling_timer_placeholder.info(
+                            f"🧊 Cooling period: {mins:02d}:{secs:02d} remaining"
+                        )
+                        time.sleep(1)
+    
+                    cooling_timer_placeholder.empty() 
 
             st.success(f"✅ Sent to {recip_addr}")
         
