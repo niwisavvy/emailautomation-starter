@@ -281,7 +281,7 @@ if send_clicked:
                # for e in cc_emails_raw.split(","):
                 #    cleaned = clean_email_address(e)
                 #    if cleaned:
-                        cc_list.append(cleaned)
+                        cc_list.append
 
         msg["From"] = from_header
         msg["To"] = to_header
