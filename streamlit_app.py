@@ -137,6 +137,12 @@ st.subheader("Email configuration")
 from_email = clean_invisible_unicode(st.text_input("Your email address", key="from_email"))
 app_password = clean_invisible_unicode(st.text_input("App password", type="password", key="app_password"))
 from_name = st.text_input("Your name (optional)", key="from_name")
+cc_emails_raw = clean_invisible_unicode(
+    st.text_input(
+        "CC email address(es) (comma separated, optional)",
+        placeholder="cc1@example.com, cc2@example.com"
+    )
+)
 
 #st.subheader("Cost Associated")
 #currency = st.selectbox("Currency", ["USD", "AED"], key="currency_select")
@@ -273,6 +279,8 @@ if send_clicked:
 
         msg["From"] = from_header
         msg["To"] = to_header
+        if cc_list:
+            msg["Cc"] = ", ".join(cc_list)
         msg["Subject"] = str(Header(subj_text, "utf-8"))
         # Request read receipts (client-dependent; often ignored)
         msg["Disposition-Notification-To"] = from_email
