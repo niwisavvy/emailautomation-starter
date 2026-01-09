@@ -139,8 +139,8 @@ app_password = clean_invisible_unicode(st.text_input("App password", type="passw
 from_name = st.text_input("Your name (optional)", key="from_name")
 cc_emails_raw = clean_invisible_unicode(
     st.text_input(
-        "CC email address(es) (comma separated, optional)",
-        placeholder="cc1@example.com, cc2@example.com"
+        "CC email address (optional)",
+        placeholder="cc@example.com"
     )
 )
 
@@ -187,21 +187,7 @@ sent_count_placeholder.metric("", st.session_state.sent_count)
 
 progress = st.progress(0)
 
-
-# ---------------- Send & Stop Buttons ----------------
-#col1, col2, col3 = st.columns(3)
-
-#with col1:
-#    send_clicked = st.button("Send Emails", key="send_emails_btn")
-
-#with col2:
-#    stop_clicked = st.button("Stop Sending", key="stop_sending_btn")
-
-#with col3:
-#    cooling_timer_placeholder = st.empty()
-
-if stop_clicked:
-    st.session_state.stop_sending = True
+cc_email = clean_email_address(cc_emails_raw) if cc_emails_raw else None
 
 # Initialize stop flag before sending
 if send_clicked:
@@ -276,17 +262,11 @@ if send_clicked:
 
         from_header = formataddr((str(Header(from_display, "utf-8")), from_email))
         to_header = formataddr((str(Header(to_display, "utf-8")), recip_addr))
-        cc_list = []
-        if cc_emails_raw:
-               # for e in cc_emails_raw.split(","):
-                #    cleaned = clean_email_address(e)
-                #    if cleaned:
-                        cc_list.append
 
         msg["From"] = from_header
         msg["To"] = to_header
-        if cc_list:
-             msg["Cc"] = ", ".join(cc_list)
+        if cc_email:
+            msg["Cc"] = cc_email
         msg["Subject"] = str(Header(subj_text, "utf-8"))
         # Request read receipts (client-dependent; often ignored)
         msg["Disposition-Notification-To"] = from_email
