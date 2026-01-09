@@ -174,13 +174,13 @@ if stop_clicked:
     st.session_state.stop_sending = True
 
         # increment local and session counters
-st.session_state.sent_count += 1
-sent += 1
-
-sent_count_placeholder.metric(
-    "Emails sent",
-    st.session_state.sent_count
-)
+    st.session_state.sent_count += 1
+    sent += 1
+    
+    sent_count_placeholder.metric(
+        "Emails sent",
+        st.session_state.sent_count
+    )
 
 if "sent_count" not in st.session_state:
     st.session_state.sent_count = 0
