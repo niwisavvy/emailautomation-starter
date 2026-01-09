@@ -263,13 +263,6 @@ progress = st.progress(0)
 
 cc_email = clean_email_address(cc_emails_raw) if cc_emails_raw else None
 
-elapsed = time.time() - st.session_state.start_time
-minutes = max(elapsed / 60, 0.01)
-
-speed = st.session_state.sent_count / minutes
-speed_placeholder.metric("Emails / min", f"{speed:.2f}")
-
-
 
 # Initialize stop flag before sending
 if send_clicked:
@@ -384,7 +377,13 @@ if send_clicked:
             
       #      with counter_col2:
       #          cooling_timer_placeholder = st.empty()
-       
+
+elapsed = time.time() - st.session_state.start_time
+minutes = max(elapsed / 60, 0.01)
+
+speed = st.session_state.sent_count / minutes
+speed_placeholder.metric("Emails / min", f"{speed:.2f}")
+      
      
  # ------- 🧊 Cooling period after every 5 emails --------
             if st.session_state.sent_count % 5 == 0:
