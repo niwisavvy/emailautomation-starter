@@ -11,6 +11,9 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+if "start_time" not in st.session_state:
+    st.session_state.start_time = None
+
 st.set_page_config(page_title="Team Niwrutti")
 
 # --- SMTP Settings (Gmail by default) ---
@@ -174,13 +177,13 @@ if stop_clicked:
     st.session_state.stop_sending = True
 
         # increment local and session counters
-    st.session_state.sent_count += 1
-    sent += 1
-    
-    sent_count_placeholder.metric(
-        "Emails sent",
-        st.session_state.sent_count
-    )
+        st.session_state.sent_count += 1
+        sent += 1
+        
+        sent_count_placeholder.metric(
+            "Emails sent",
+            st.session_state.sent_count
+        )
 
 if "sent_count" not in st.session_state:
     st.session_state.sent_count = 0
@@ -190,6 +193,9 @@ if "sending" not in st.session_state:
 
 sent_count_placeholder = st.empty()
 sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
+
+speed_placeholder = st.empty()
+speed_placeholder.metric("Emails / min", "0.0")
 
 # -------- live counter placeholder (shows 0 initially) --------
 #            counter_col1 = st.columns(1)
@@ -257,10 +263,20 @@ progress = st.progress(0)
 
 cc_email = clean_email_address(cc_emails_raw) if cc_emails_raw else None
 
+elapsed = time.time() - st.session_state.start_time
+minutes = max(elapsed / 60, 0.01)
+
+speed = st.session_state.sent_count / minutes
+speed_placeholder.metric("Emails / min", f"{speed:.2f}")
+
+
+
 # Initialize stop flag before sending
 if send_clicked:
     st.session_state.sending = True
     st.session_state.sent_count = 0
+    st.session_state.start_time = time.time()
+    speed_placeholder.metric("Emails / min", "0.0")
 
     sent_count_placeholder.metric("Emails sent", 0)
     st.session_state.stop_sending = False
