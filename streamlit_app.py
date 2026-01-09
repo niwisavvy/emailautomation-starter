@@ -64,6 +64,47 @@ def clean_display_name(name: str) -> str:
     name = name.strip()
     return name
 
+def extract_display_name(full_name: str) -> str:
+    """
+    Returns a clean display name based on rules:
+    - Preserve title (Dr./Mr./Prof.) if present
+    - Skip 1-letter words
+    - Use first valid name word
+    """
+    if not full_name:
+        return ""
+
+    # Normalize spaces
+    words = full_name.replace(".", ". ").split()
+    words = [w.strip() for w in words if w.strip()]
+
+    if not words:
+        return ""
+
+    titles = {"dr", "mr", "prof"}
+    title = None
+
+    # Check if first word is a title
+    first_word_clean = words[0].replace(".", "").lower()
+    if first_word_clean in titles:
+        title = first_word_clean.capitalize() + "."
+        words = words[1:]  # remove title from name list
+
+    # Find first valid name (skip 1-letter words)
+    first_name = ""
+    for w in words:
+        if len(w) > 1:
+            first_name = w
+            break
+
+    if not first_name:
+        return title or ""
+
+    if title:
+        return f"{title} {first_name}"
+    return first_name
+
+
 def clean_invisible_unicode(s: str) -> str:
     """Remove invisible unicode characters such as non-breaking spaces."""
     if not isinstance(s, str):
@@ -227,12 +268,12 @@ if send_clicked:
 
         # Extract first name for body only
         full_name = rowd.get("name", "")
-        first_name = full_name.split()[0] if full_name.strip() else ""
+        display_name = extract_display_name(full_name)
 
         # Prepare mappings for subject and body separately
         subject_mapping = dict(rowd)  # full name for subject
         body_mapping = dict(rowd)
-        body_mapping["name"] = first_name  # first name for body
+        body_mapping["name"] = display_name  # first name for body
 
         #subj_text = safe_format(subject_tpl, subject_mapping)
         #body_text = safe_format(body_tpl, body_mapping)
