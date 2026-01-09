@@ -11,9 +11,6 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-if "start_time" not in st.session_state:
-    st.session_state.start_time = None
-
 st.set_page_config(page_title="Team Niwrutti")
 
 # --- SMTP Settings (Gmail by default) ---
@@ -66,47 +63,6 @@ def clean_display_name(name: str) -> str:
     # Strip leading/trailing spaces
     name = name.strip()
     return name
-
-def extract_display_name(full_name: str) -> str:
-    """
-    Returns a clean display name based on rules:
-    - Preserve title (Dr./Mr./Prof.) if present
-    - Skip 1-letter words
-    - Use first valid name word
-    """
-    if not full_name:
-        return ""
-
-    # Normalize spaces
-    words = full_name.replace(".", ". ").split()
-    words = [w.strip() for w in words if w.strip()]
-
-    if not words:
-        return ""
-
-    titles = {"dr", "mr", "prof"}
-    title = None
-
-    # Check if first word is a title
-    first_word_clean = words[0].replace(".", "").lower()
-    if first_word_clean in titles:
-        title = first_word_clean.capitalize() + "."
-        words = words[1:]  # remove title from name list
-
-    # Find first valid name (skip 1-letter words)
-    first_name = ""
-    for w in words:
-        if len(w) > 1:
-            first_name = w
-            break
-
-    if not first_name:
-        return title or ""
-
-    if title:
-        return f"{title} {first_name}"
-    return first_name
-
 
 def clean_invisible_unicode(s: str) -> str:
     """Remove invisible unicode characters such as non-breaking spaces."""
@@ -176,36 +132,6 @@ with col3:
 if stop_clicked:
     st.session_state.stop_sending = True
 
-        # increment local and session counters
-    st.session_state.sent_count += 1
-    sent += 1
-    
-    sent_count_placeholder.metric(
-        "Emails sent",
-        st.session_state.sent_count
-    )
-
-if "sent_count" not in st.session_state:
-    st.session_state.sent_count = 0
-
-if "sending" not in st.session_state:
-    st.session_state.sending = False
-
-sent_count_placeholder = st.empty()
-sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
-
-speed_placeholder = st.empty()
-speed_placeholder.metric("Emails / min", "0.0")
-
-# -------- live counter placeholder (shows 0 initially) --------
-#            counter_col1 = st.columns(1)
-            
- #           with counter_col1:
-  #              try:
-   #                 sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
-    #            except Exception:
-     #               st.write(f"Emails sent: {st.session_state.sent_count}")
-
 # ---------------- Email Config ----------------
 st.subheader("Email configuration")
 from_email = clean_invisible_unicode(st.text_input("Your email address", key="from_email"))
@@ -263,15 +189,8 @@ progress = st.progress(0)
 
 cc_email = clean_email_address(cc_emails_raw) if cc_emails_raw else None
 
-
 # Initialize stop flag before sending
 if send_clicked:
-    st.session_state.sending = True
-    st.session_state.sent_count = 0
-    st.session_state.start_time = time.time()
-    speed_placeholder.metric("Emails / min", "0.0")
-
-    sent_count_placeholder.metric("Emails sent", 0)
     st.session_state.stop_sending = False
     st.session_state.sent_count = 0
 
@@ -308,12 +227,12 @@ if send_clicked:
 
         # Extract first name for body only
         full_name = rowd.get("name", "")
-        display_name = extract_display_name(full_name)
+        first_name = full_name.split()[0] if full_name.strip() else ""
 
         # Prepare mappings for subject and body separately
         subject_mapping = dict(rowd)  # full name for subject
         body_mapping = dict(rowd)
-        body_mapping["name"] = display_name  # first name for body
+        body_mapping["name"] = first_name  # first name for body
 
         #subj_text = safe_format(subject_tpl, subject_mapping)
         #body_text = safe_format(body_tpl, body_mapping)
@@ -365,43 +284,43 @@ if send_clicked:
                 with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
                     server.login(from_email, app_password)
                     server.send_message(msg)
-            st.session_state.sent_count += 1
+            
+        # increment local and session counters
             sent += 1
+            st.session_state.sent_count += 1
 
-            sent_count_placeholder.metric(
-                "Emails sent",
-                st.session_state.sent_count
-            )
-
-
+            # live counter placeholder (shows 0 initially)
+            counter_col1 = st.columns(1)
+            
+            with counter_col1:
+                try:
+                    sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
+                except Exception:
+                    st.write(f"Emails sent: {st.session_state.sent_count}")
             
       #      with counter_col2:
       #          cooling_timer_placeholder = st.empty()
-
-elapsed = time.time() - st.session_state.start_time
-minutes = max(elapsed / 60, 0.01)
-
-speed = st.session_state.sent_count / minutes
-speed_placeholder.metric("Emails / min", f"{speed:.2f}")
-      
+       
      
  # ------- 🧊 Cooling period after every 5 emails --------
             if st.session_state.sent_count % 5 == 0:
-                cooling_time = 120  # seconds
-                end_time = time.time() + cooling_time
+                cooling_time = 120  # 2 minutes
+                start_cool = time.time()
 
-                while time.time() < end_time:
-                    remaining = int(end_time - time.time())
+                while True:
+                    elapsed = time.time() - start_cool
+                    remaining = int(cooling_time - elapsed)
+
+                    if remaining <= 0:
+                        break
+
                     mins, secs = divmod(remaining, 60)
-
-                    cooling_timer_placeholder.warning(
-                        f"🧊 Cooling down… {mins:02d}:{secs:02d} remaining"
+                    cooling_timer_placeholder.info(
+                        f"🧊 Cooling period: {mins:02d}:{secs:02d} remaining"
                     )
-
                     time.sleep(1)
 
-                cooling_timer_placeholder.empty()
-
+                cooling_timer_placeholder.empty() 
 
             st.success(f"✅ Sent to {recip_addr}")
         
