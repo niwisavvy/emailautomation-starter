@@ -288,15 +288,18 @@ if send_clicked:
         # increment local and session counters
             sent += 1
             st.session_state.sent_count += 1
+            sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
 
             # live counter placeholder (shows 0 initially)
-            counter_col1 = st.columns(1)
+           # counter_col1 = st.columns(1)
             
-            with counter_col1:
-                try:
-                    sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
-                except Exception:
-                    st.write(f"Emails sent: {st.session_state.sent_count}")
+            #with counter_col1:
+             #   try:
+              #      sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
+               # except Exception:
+                #    st.write(f"Emails sent: {st.session_state.sent_count}")
+
+           
             
       #      with counter_col2:
       #          cooling_timer_placeholder = st.empty()
