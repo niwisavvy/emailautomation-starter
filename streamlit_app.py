@@ -70,6 +70,36 @@ def clean_invisible_unicode(s: str) -> str:
         return s
     return s.replace('\xa0', '').replace('\u200b', '').strip()
 
+def format_first_name(full_name: str) -> str:
+    """
+    Extract first name and keep prefix like Dr, Ms, Mrs.
+    Also normalize capitalization.
+    """
+
+    if not full_name:
+        return ""
+
+    prefixes = {"dr", "dr.", "mr", "mr.", "mrs", "mrs.", "ms", "ms.", "prof", "prof."}
+
+    parts = full_name.strip().split()
+
+    if not parts:
+        return ""
+
+    # Normalize case for each word
+    parts = [p.capitalize() for p in parts]
+
+    first_word = parts[0].lower()
+
+    # If prefix exists
+    if first_word in prefixes and len(parts) > 1:
+        prefix = parts[0].capitalize().replace(".", "")
+        name = parts[1].capitalize()
+        return f"{prefix} {name}"
+
+    # Otherwise just return first name
+    return parts[0].capitalize()
+
 # ---------------- Upload & Sample CSV ----------------
 st.title("Team Niwrutti")
 st.subheader("Upload recipient list")
@@ -226,8 +256,12 @@ if send_clicked:
         rowd.setdefault("name", "")
 
         # Extract first name for body only
+        #full_name = rowd.get("name", "")
+        #first_name = full_name.split()[0] if full_name.strip() else ""
+
+        # Extract formatted first name for body
         full_name = rowd.get("name", "")
-        first_name = full_name.split()[0] if full_name.strip() else ""
+        first_name = format_first_name(full_name)
 
         # Prepare mappings for subject and body separately
         subject_mapping = dict(rowd)  # full name for subject
