@@ -104,7 +104,7 @@ def format_first_name(full_name: str) -> str:
     # -------- CASE 2: Single-letter first name --------
     if len(parts[0]) == 1 and len(parts) > 1:
         last_name = parts[1].capitalize()
-        return f"Dear Mr {last_name}"
+        return f"Mr {last_name}"
 
     # -------- CASE 3: Normal name --------
     return parts[0].capitalize()    
