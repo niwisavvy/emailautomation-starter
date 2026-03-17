@@ -18,6 +18,8 @@ SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 USE_TLS = True
 
+progress_file = "progress.txt"
+
 # ---------------- Helpers ----------------
 def clean_value(val):
     """Clean individual cell values (remove invisible characters)."""
@@ -258,6 +260,16 @@ cc_email = clean_email_address(cc_emails_raw) if cc_emails_raw else None
 
 # Initialize stop flag before sending
 if send_clicked:
+    # Load last progress
+    start_index = 0
+    try:
+        with open(progress_file, "r") as f:
+            start_index = int(f.read().strip())
+    except:
+        start_index = 0
+
+    st.info(f"Resuming from email #{start_index + 1}")
+    
     st.session_state.stop_sending = False
     st.session_state.sent_count = 0
 
@@ -277,7 +289,7 @@ if send_clicked:
     skipped_rows = []
     failed_rows = []
 
-    for idx, row in df.iterrows():
+    for idx, row in df.iloc[start_index:].iterrows():
         rowd = {str(k): clean_value(v) for k, v in row.to_dict().items()}
 
         # Validate recipient email
@@ -397,6 +409,9 @@ if send_clicked:
                 cooling_timer_placeholder.empty() 
 
             st.success(f"✅ Sent to {recip_addr}")
+            # Save progress
+            with open(progress_file, "w") as f:
+                f.write(str(idx + 1))
         
         except Exception as e:
             st.error(f"Failed to send to {recip_addr}: {e}")
