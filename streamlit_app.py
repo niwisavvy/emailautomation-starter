@@ -331,7 +331,7 @@ if send_clicked:
             st.session_state.sent_count += 1
 
             # live counter placeholder (shows 0 initially)
-            counter_col1 = st.columns(1)
+            counter_col1 = st.columns(1)[0]
             
             with counter_col1:
                 try:
