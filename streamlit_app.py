@@ -18,6 +18,8 @@ SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 USE_TLS = True
 
+progress_file = "progress.txt"
+
 # ---------------- Helpers ----------------
 def clean_value(val):
     """Clean individual cell values (remove invisible characters)."""
@@ -69,6 +71,73 @@ def clean_invisible_unicode(s: str) -> str:
     if not isinstance(s, str):
         return s
     return s.replace('\xa0', '').replace('\u200b', '').strip()
+
+#def format_first_name(full_name: str) -> str:
+
+def format_first_name(full_name: str) -> str:
+    """
+    Handle:
+    - Prefix names (Dr, Ms, Mrs)
+    - ALL CAPS / lowercase normalization
+    - Single-letter first name → Dear Mr/Ms LastName
+    """
+
+    if not full_name:
+        return ""
+
+    prefixes = {"dr", "dr.", "mr", "mr.", "mrs", "mrs.", "ms", "ms.", "prof", "prof."}
+
+    parts = full_name.strip().split()
+
+    if not parts:
+        return ""
+
+    # Normalize case
+    parts = [p.capitalize() for p in parts]
+
+    first_word = parts[0].lower()
+
+    # -------- CASE 1: Prefix present --------
+    if first_word in prefixes and len(parts) > 1:
+        prefix = parts[0].capitalize().replace(".", "")
+        name = parts[1].capitalize()
+        return f"{prefix} {name}"
+
+    # -------- CASE 2: Single-letter first name --------
+    if len(parts[0]) == 1 and len(parts) > 1:
+        last_name = parts[1].capitalize()
+        return f"Mr {last_name}"
+
+    # -------- CASE 3: Normal name --------
+    return parts[0].capitalize()    
+    """
+    Extract first name and keep prefix like Dr, Ms, Mrs.
+    Also normalize capitalization.
+    """
+
+    if not full_name:
+        return ""
+
+    prefixes = {"dr", "dr.", "mr", "mr.", "mrs", "mrs.", "ms", "ms.", "prof", "prof."}
+
+    parts = full_name.strip().split()
+
+    if not parts:
+        return ""
+
+    # Normalize case for each word
+    parts = [p.capitalize() for p in parts]
+
+    first_word = parts[0].lower()
+
+    # If prefix exists
+    if first_word in prefixes and len(parts) > 1:
+        prefix = parts[0].capitalize().replace(".", "")
+        name = parts[1].capitalize()
+        return f"{prefix} {name}"
+
+    # Otherwise just return first name
+    return parts[0].capitalize()
 
 # ---------------- Upload & Sample CSV ----------------
 st.title("Team Niwrutti")
@@ -191,6 +260,16 @@ cc_email = clean_email_address(cc_emails_raw) if cc_emails_raw else None
 
 # Initialize stop flag before sending
 if send_clicked:
+    # Load last progress
+    start_index = 0
+    try:
+        with open(progress_file, "r") as f:
+            start_index = int(f.read().strip())
+    except:
+        start_index = 0
+
+    st.info(f"Resuming from email #{start_index + 1}")
+    
     st.session_state.stop_sending = False
     st.session_state.sent_count = 0
 
@@ -210,7 +289,7 @@ if send_clicked:
     skipped_rows = []
     failed_rows = []
 
-    for idx, row in df.iterrows():
+    for idx, row in df.iloc[start_index:].iterrows():
         rowd = {str(k): clean_value(v) for k, v in row.to_dict().items()}
 
         # Validate recipient email
@@ -226,8 +305,12 @@ if send_clicked:
         rowd.setdefault("name", "")
 
         # Extract first name for body only
+        #full_name = rowd.get("name", "")
+        #first_name = full_name.split()[0] if full_name.strip() else ""
+
+        # Extract formatted first name for body
         full_name = rowd.get("name", "")
-        first_name = full_name.split()[0] if full_name.strip() else ""
+        first_name = format_first_name(full_name)
 
         # Prepare mappings for subject and body separately
         subject_mapping = dict(rowd)  # full name for subject
@@ -288,15 +371,18 @@ if send_clicked:
         # increment local and session counters
             sent += 1
             st.session_state.sent_count += 1
+            sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
 
             # live counter placeholder (shows 0 initially)
-            counter_col1 = st.columns(1)
+           # counter_col1 = st.columns(1)
             
-            with counter_col1:
-                try:
-                    sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
-                except Exception:
-                    st.write(f"Emails sent: {st.session_state.sent_count}")
+            #with counter_col1:
+             #   try:
+              #      sent_count_placeholder.metric("Emails sent", st.session_state.sent_count)
+               # except Exception:
+                #    st.write(f"Emails sent: {st.session_state.sent_count}")
+
+           
             
       #      with counter_col2:
       #          cooling_timer_placeholder = st.empty()
@@ -323,6 +409,9 @@ if send_clicked:
                 cooling_timer_placeholder.empty() 
 
             st.success(f"✅ Sent to {recip_addr}")
+            # Save progress
+            with open(progress_file, "w") as f:
+                f.write(str(idx + 1))
         
         except Exception as e:
             st.error(f"Failed to send to {recip_addr}: {e}")
@@ -376,3 +465,4 @@ if send_clicked:
         )
         
 st.session_state.sending = False
+
